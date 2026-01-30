@@ -10,6 +10,7 @@ protobuf
 tqdm
 ollama
 pypdf
+python-dotenv
 
 # No Mac, o torch é necessário para o VSCode não reclamar, 
 # mas no Linux o Unsloth gerencia a versão dele.

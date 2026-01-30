@@ -27,6 +27,8 @@ outputs/
 outputs_checkpoints/
 models/
 wandb/
+data/processed/*
+!data/processed/.gitkeep
 
 # Ignora datasets brutos (Se conter dados reais da empresa)
 # Se quiser versionar o dataset de exemplo, coloque um '!' na frente do arquivo específico

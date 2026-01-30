@@ -22,7 +22,7 @@ project_config = ProjectConfig(
         batch_size=2,
         output_dir="outputs_checkpoints"
     ),
-    dataset_path="data/raw/train_data.jsonl",
+    dataset_path="data/processed/train_dataset_final.jsonl",
     final_model_name="models/planus_qwen_v1"  # Pasta onde salva o GGUF final
 )
 
