@@ -1,0 +1,3 @@
+[MASTER]
+# Ignora erros de importação para bibliotecas que só existem no Linux
+ignored-modules=unsloth,trl,xformers,bitsandbytes
