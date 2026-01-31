@@ -1,5 +1,5 @@
 """
-Logger configuration module for Planuze.
+Logger configuration module for Core.
 
 This module provides a setup function to configure logging with both console
 and file handlers, ensuring consistent logging across the application.
@@ -10,7 +10,7 @@ import sys
 
 
 def setup_logger(
-    name: str = "planuze", log_level: str = "INFO"
+    name: str = "core", log_level: str = "INFO"
 ) -> logging.Logger:
     """
     Configures and returns a logger with console and file handlers.
@@ -44,7 +44,7 @@ def setup_logger(
     log_dir = "logs"
     os.makedirs(log_dir, exist_ok=True)
     file_handler = logging.FileHandler(os.path.join(
-        log_dir, "planuze.log"), encoding="utf-8")
+        log_dir, "core.log"), encoding="utf-8")
     file_handler.setFormatter(formatter)
     configured_logger.addHandler(file_handler)
 

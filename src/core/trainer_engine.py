@@ -5,7 +5,7 @@ from trl import SFTTrainer
 from transformers import TrainingArguments
 from unsloth import is_bfloat16_supported
 from config.settings import TrainingConfig
-from src.planuze.utils.logger import logger
+from src.core.utils.logger import logger
 
 
 def run_training(

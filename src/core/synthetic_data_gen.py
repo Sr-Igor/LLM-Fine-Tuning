@@ -8,7 +8,7 @@ import ollama
 from pypdf import PdfReader
 from tqdm import tqdm
 from dotenv import load_dotenv
-from src.planuze.utils.logger import logger
+from src.core.utils.logger import logger
 from config.settings import SyntheticConfig
 
 # ==========================================
@@ -140,7 +140,7 @@ def _process_single_document(doc):
         f"Atue como um especialista em criar datasets para treinamento.\n"
         f"Crie 2 pares de interação Usuário/Assistente baseados "
         f"EXCLUSIVAMENTE neste texto.\n"
-        f"As perguntas devem simular um usuário do sistema ERP Planuze "
+        f"As perguntas devem simular um usuário do sistema ERP "
         f"com dúvidas reais.\n\n"
         f"Retorne APENAS um JSON válido (lista de objetos) no seguinte "
         f"formato, sem markdown:\n\n"

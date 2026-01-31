@@ -3,7 +3,7 @@ Módulo para manipulação e processamento de dados.
 """
 from functools import partial
 from datasets import load_dataset
-from src.planuze.prompt_templates import apply_chat_template
+from src.core.prompt_templates import apply_chat_template
 
 
 def load_and_process_data(file_path: str, tokenizer):

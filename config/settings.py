@@ -1,5 +1,5 @@
 """
-Configuration settings for the Planuze LLM project.
+Configuration settings for the LLM project.
 
 This module defines configuration classes for the model, training, and
 project settings, loading values from environment variables with default
@@ -152,5 +152,5 @@ class ProjectConfig:
             dataset_path=os.getenv(
                 "DATASET_PATH", "data/processed/train_dataset_final.jsonl"),
             final_model_name=os.getenv(
-                "FINAL_MODEL_NAME", "models/planus_qwen_v1")
+                "FINAL_MODEL_NAME", "models/llm_qwen_v1")
         )

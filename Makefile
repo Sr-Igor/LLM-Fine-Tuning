@@ -1,4 +1,4 @@
-# Makefile - Comandos do Projeto Planus
+# Makefile - Comandos do Projeto LLM
 
 # Variáveis
 PYTHON = venv/bin/python
@@ -8,7 +8,7 @@ PIP = venv/bin/pip
 
 # O comando padrão quando você roda apenas 'make'
 help:
-	@echo "🤖 COMANDOS DO PLANUS:"
+	@echo "🤖 COMANDOS DO LLM:"
 	@echo "  make install  - Instala as dependências (Mac + Nvidia)"
 	@echo "  make data     - Gera e processa os dados (Sintético + Manual)"
 	@echo "  make train    - Inicia o treinamento (Requer GPU)"
@@ -29,8 +29,8 @@ train:
 
 # Atalho para registrar e rodar no Ollama
 run:
-	ollama create planus-pro -f Modelfile
-	ollama run planus-pro
+	ollama create llm-pro -f Modelfile
+	ollama run llm-pro
 
 clean:
 	rm -rf __pycache__

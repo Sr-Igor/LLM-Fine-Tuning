@@ -5,9 +5,9 @@ Script principal para execução do pipeline de treinamento do modelo.
 from dotenv import load_dotenv
 
 from config.settings import ProjectConfig
-from src.planuze.model_loader import ModelManager
-from src.planuze.data_handler import load_and_process_data
-from src.planuze.trainer_engine import run_training
+from src.core.model_loader import ModelManager
+from src.core.data_handler import load_and_process_data
+from src.core.trainer_engine import run_training
 
 # Carrega variáveis de ambiente
 load_dotenv()

@@ -9,7 +9,7 @@ import sys
 import pytest
 
 # Add the project root and src directory to sys.path to allow imports
-# from 'config' (at root) and 'planuze' (under src)
+# from 'config' (at root) and 'core' (under src)
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 sys.path.insert(0, os.path.abspath(
@@ -24,5 +24,5 @@ def mock_env_setup(monkeypatch):
     and don't accidetally rely on the real .env file or system environment.
     """
     monkeypatch.setenv("MODEL_NAME", "test-model")
-    monkeypatch.setenv("PROJECT_NAME", "planuze-test")
+    monkeypatch.setenv("PROJECT_NAME", "llm-test")
     monkeypatch.setenv("LOG_LEVEL", "DEBUG")

@@ -1,4 +1,4 @@
-# 📘 Protocolo Planus: Pipeline de Fine-Tuning e Exportação de LLMs
+# 📘 Protocolo LLM: Pipeline de Fine-Tuning e Exportação de LLMs
 
 **Stack:** Unsloth (Qwen2.5), Google Colab (T4 GPU), Google Drive, Hugging Face, Ollama.
 **Objetivo:** Treinar modelos adaptados ao contexto de negócio e exportá-los para execução local via GGUF.
@@ -18,7 +18,7 @@ O sucesso da exportação depende de como os arquivos são estruturados no iníc
 
 ### 2. Mapeamento de Caminhos (Dinâmico)
 
-Como o nome da pasta pode mudar (ex: `meu-projeto-v1`, `planus-final`, `teste-dev`), **nunca** use caminhos absolutos hardcoded ("chumbados") nos scripts.
+Como o nome da pasta pode mudar (ex: `meu-projeto-v1`, `llm-final`, `teste-dev`), **nunca** use caminhos absolutos hardcoded ("chumbados") nos scripts.
 
 **Script de Setup Inicial no Colab:**
 
@@ -31,7 +31,7 @@ drive.mount('/content/drive')
 
 # 2. Definir a Raiz do Projeto (VARIÁVEL CRÍTICA)
 # Altere APENAS esta linha conforme o nome da pasta atual no seu Drive
-PROJECT_ROOT_NAME = "planuze-llm-collab"
+PROJECT_ROOT_NAME = "llm-collab"
 
 # Caminho absoluto construído dinamicamente
 PROJECT_PATH = f"/content/drive/MyDrive/llm/{PROJECT_ROOT_NAME}"
@@ -112,7 +112,7 @@ from dotenv import load_dotenv
 load_dotenv(f"{PROJECT_PATH}/.env") # Usa a variável dinâmica da Fase 1
 ```
 
-3.  **Namespace (O erro 403):** Você não pode criar um repo para uma organização que não pertence (ex: `planuze/modelo`) se o seu usuário for `joao-dev` e não tiver permissão.
+3.  **Namespace (O erro 403):** Você não pode criar um repo para uma organização que não pertence (ex: `llm/modelo`) se o seu usuário for `joao-dev` e não tiver permissão.
 
 **Script de Upload Seguro:**
 
@@ -129,7 +129,7 @@ login(token=token)
 # 2. Identificação Automática do Usuário (Evita erro 403)
 api = HfApi()
 username = api.whoami()['name']
-repo_name = "planus-qwen-v1" # Nome do modelo desejado
+repo_name = "llm-qwen-v1" # Nome do modelo desejado
 full_repo_id = f"{username}/{repo_name}"
 
 print(f"🚀 Enviando para: {full_repo_id}")
@@ -138,7 +138,7 @@ print(f"🚀 Enviando para: {full_repo_id}")
 api.create_repo(repo_id=full_repo_id, repo_type="model", exist_ok=True)
 api.upload_file(
     path_or_fileobj="qwen2.5-7b-instruct.Q4_K_M.gguf", # Arquivo local gerado
-    path_in_repo="planus.gguf",
+    path_in_repo="llm.gguf",
     repo_id=full_repo_id
 )
 ```
@@ -153,7 +153,7 @@ Após o sucesso no upload, o desenvolvedor baixa o modelo para sua máquina loca
 2.  **Execução via Link Direto (Hugging Face):**
 
 ```bash
-ollama run hf.co/<SEU_USER>/planus-qwen-v1
+ollama run hf.co/<SEU_USER>/llm-qwen-v1
 ```
 
 ### Customização (Modelfile)
@@ -161,12 +161,12 @@ ollama run hf.co/<SEU_USER>/planus-qwen-v1
 Para travar o Prompt do Sistema, crie um arquivo `Modelfile`:
 
 ```dockerfile
-FROM ./planus.gguf
-SYSTEM "Você é o Tech Lead da Planuze, especialista em..."
+FROM ./llm.gguf
+SYSTEM "Você é um Tech Lead, especialista em..."
 PARAMETER temperature 0.3
 ```
 
-E crie o modelo: `ollama create planus -f Modelfile`
+E crie o modelo: `ollama create llm -f Modelfile`
 
 ---
 

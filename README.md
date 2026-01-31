@@ -153,7 +153,7 @@ Isso criará o modelo no Ollama e iniciará um chat no terminal.
 │   └── processed/          # [SAÍDA] Dataset JSONL final para treino
 ├── models/                 # Onde os modelos .gguf e adaptadores serão salvos
 ├── src/
-│   ├── planuze/            # Código fonte principal (pode ser renomeado para seu projeto)
+│   ├── core/            # Código fonte principal (pode ser renomeado para seu projeto)
 │   │   ├── utils/          # Loggers e utilitários
 │   │   ├── synthetic_data_gen.py
 │   │   └── data_handler.py
