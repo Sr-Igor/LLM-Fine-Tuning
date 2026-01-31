@@ -190,9 +190,11 @@ def _process_single_document(doc):
                 "instruction": CONFIG.system_instruction,
                 # O Input simula o que o sistema RAG entregaria para o
                 # modelo em produção
-                "input": (f"[TEMA]: Documentação {doc['source']}\n"
-                          f"[CONTEXTO]: {item['contexto']}\n"
-                          f"[PERGUNTA]: {item['pergunta']}"),
+                "input": (
+                    f"[{CONFIG.chat_subject}]: Documentação {doc['source']}\n"
+                    f"[{CONFIG.chat_context}]: {item['contexto']}\n"
+                    f"[{CONFIG.chat_question}]: {item['pergunta']}"
+                ),
                 "output": item['resposta']
             }
             generated_rows.append(row)
@@ -247,7 +249,7 @@ def save_jsonl(data, filename):
 # EXECUÇÃO PRINCIPAL
 # ==========================================
 if __name__ == "__main__":
-    logger.info("--- INICIANDO GERADOR SINTÉTICO PLANUS ---")
+    logger.info("--- INICIANDO GERADOR SINTÉTICO ---")
 
     # 1. Extrair Texto
     docs = extract_text_from_files(CONFIG.source_dir)

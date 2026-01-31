@@ -110,6 +110,11 @@ class SyntheticConfig:
     system_instruction: str
     chunk_size: int = 2000
     overlap: int = 200
+    chat_subject: str = "TEMA"
+    chat_context: str = "CONTEXTO"
+    chat_question: str = "PERGUNTA"
+    chat_history: str = "HISTÓRICO"
+    chat_language: str = "IDIOMA"
 
     @classmethod
     def from_env(cls):
