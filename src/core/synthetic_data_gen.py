@@ -191,9 +191,11 @@ def _process_single_document(doc):
                 # O Input simula o que o sistema RAG entregaria para o
                 # modelo em produção
                 "input": (
+                    f"[{CONFIG.chat_history}]: \n"
                     f"[{CONFIG.chat_subject}]: Documentação {doc['source']}\n"
                     f"[{CONFIG.chat_context}]: {item['contexto']}\n"
-                    f"[{CONFIG.chat_question}]: {item['pergunta']}"
+                    f"[{CONFIG.chat_question}]: {item['pergunta']}\n"
+                    f"[{CONFIG.chat_language}]: pt"
                 ),
                 "output": item['resposta']
             }

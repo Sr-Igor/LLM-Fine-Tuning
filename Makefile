@@ -20,14 +20,14 @@ install:
 
 # Roda o pipeline de dados completo (Gerar -> Merge)
 data:
-	$(PYTHON) src/synthetic_data_gen.py
-	$(PYTHON) src/dataset_merger.py
+	PYTHONPATH=. $(PYTHON) src/core/synthetic_data_gen.py
+	# $(PYTHON) src/core/dataset_merger.py
 
 # Roda o treino (No Mac isso vai falhar se não tiver configurado o Google Colab/Remote, mas fica o script)
 train:
 	$(PYTHON) main.py
 
-# Atalho para registrar e rodar no Ollama
+# Atalho para registrar e rodar no Ollama (Utilize apenas localmente, altere para o nome do seu modelo)
 run:
 	ollama create llm-pro -f Modelfile
 	ollama run llm-pro

@@ -127,7 +127,12 @@ class SyntheticConfig:
             generator_model=os.getenv("SYNTHETIC_GENERATOR_MODEL", "llama3.1"),
             system_instruction=os.getenv("SYNTHETIC_SYSTEM_INSTRUCTION", ""),
             chunk_size=int(os.getenv("SYNTHETIC_CHUNK_SIZE", "2000")),
-            overlap=int(os.getenv("SYNTHETIC_OVERLAP", "200"))
+            overlap=int(os.getenv("SYNTHETIC_OVERLAP", "200")),
+            chat_subject=os.getenv("AI_CHAT_SUBJECT", "SUBJECT"),
+            chat_context=os.getenv("AI_CHAT_CONTEXT", "CONTEXT"),
+            chat_question=os.getenv("AI_CHAT_QUESTION", "QUESTION"),
+            chat_history=os.getenv("AI_CHAT_HISTORY", "HISTORY"),
+            chat_language=os.getenv("AI_CHAT_LANGUAGE", "LANGUAGE")
         )
 
 
