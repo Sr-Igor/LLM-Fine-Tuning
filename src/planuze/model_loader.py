@@ -3,7 +3,8 @@ Módulo para carregamento e gerenciamento do modelo e adapters.
 """
 from typing import Tuple
 from unsloth import FastLanguageModel
-from config.settings import ModelConfig
+
+from config.settings import ModelConfig, LoraConfig
 
 
 class ModelManager:
@@ -12,8 +13,9 @@ class ModelManager:
     e salvamento).
     """
 
-    def __init__(self, config: ModelConfig):
-        self.config = config
+    def __init__(self, model_config: ModelConfig, lora_config: LoraConfig):
+        self.config = model_config
+        self.lora_config = lora_config
         self.model = None
         self.tokenizer = None
 
@@ -43,14 +45,13 @@ class ModelManager:
         print("🔧 Aplicando adaptadores LoRA...")
         self.model = FastLanguageModel.get_peft_model(
             self.model,
-            r=16,
-            target_modules=["q_proj", "k_proj", "v_proj", "o_proj",
-                            "gate_proj", "up_proj", "down_proj"],
-            lora_alpha=16,
-            lora_dropout=0,
+            r=self.lora_config.r,
+            target_modules=self.lora_config.target_modules,
+            lora_alpha=self.lora_config.alpha,
+            lora_dropout=self.lora_config.dropout,
             bias="none",
             use_gradient_checkpointing="unsloth",
-            random_state=3407,
+            random_state=self.lora_config.random_state,
             use_rslora=False,
             loftq_config=None,
         )

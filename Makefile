@@ -36,3 +36,5 @@ clean:
 	rm -rf __pycache__
 	rm -rf data/processed/*
 	find . -type f -name "*.pyc" -delete
+test:
+	pytest

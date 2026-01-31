@@ -6,13 +6,24 @@ import json
 import random
 import glob
 
+from dotenv import load_dotenv
+
+# Carrega variáveis de ambiente
+load_dotenv()
+
 # ==========================================
 # CONFIGURAÇÕES
 # ==========================================
 # Onde estão os arquivos parciais (rules.jsonl, synthetic.jsonl)
-RAW_DATA_DIR = "data/raw"
-PROCESSED_DIR = "data/processed"     # Onde será salvo o arquivo final limpo
-OUTPUT_FILENAME = "train_dataset_final.jsonl"
+RAW_DATA_DIR = os.getenv("RAW_DATA_DIR", "data/raw")
+# Onde será salvo o arquivo final limpo
+PROCESSED_DIR = os.getenv("PROCESSED_DATA_DIR", "data/processed")
+
+# Pega o nome do arquivo final da variável DATASET_PATH
+# (se definida) ou usa o padrão
+dataset_path_env = os.getenv(
+    "DATASET_PATH", "data/processed/train_dataset_final.jsonl")
+OUTPUT_FILENAME = os.path.basename(dataset_path_env)
 
 
 def _validate_entry(entry, index, is_line=True):
