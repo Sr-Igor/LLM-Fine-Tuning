@@ -1,38 +1,57 @@
-# @title 🚀 Pipeline Master v6: Protocolo Planus (Memory Safe)
+# @title 🚀 Pipeline Master v10: Protocolo Planus (VRAM Guard)
+
 
 from huggingface_hub import login, HfApi
 from datasets import load_dataset
 from transformers import TrainingArguments
 from trl import SFTTrainer
 from unsloth import FastLanguageModel
+from dotenv import load_dotenv
+from google.colab import drive
+import torch
+import shutil
+import gc
+import importlib.util
+import time
+import subprocess
+import json
 import os
 import sys
-import json
-import subprocess
-import time
-import importlib.util
-import gc
-import torch
-from google.colab import drive
-from dotenv import load_dotenv
+
+# [CRÍTICO] Otimização de memória para T4
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+
 
 # ==========================================
-# 🧹 0. LIMPEZA DE MEMÓRIA (NOVO)
+# 🛡️ 0. VRAM GUARD (Trava de Segurança)
 # ==========================================
-print("🧹 [0/6] Higienizando VRAM...")
+print("🛡️ [0/6] Verificando integridade da GPU...")
+
+# Tenta limpar primeiro
 try:
-    del model
-    del tokenizer
-    del trainer
+    del model, tokenizer, trainer
 except:
     pass
 gc.collect()
 torch.cuda.empty_cache()
-print(
-    f"✅ VRAM Limpa. Memória livre: {torch.cuda.mem_get_info()[0] / 1024**3:.2f} GB")
+
+# Verifica memória real disponível
+free_vram = torch.cuda.mem_get_info()[0] / 1024**3
+total_vram = torch.cuda.mem_get_info()[1] / 1024**3
+
+print(f"📊 Status VRAM: {free_vram:.2f} GB Livres / {total_vram:.2f} GB Totais")
+
+if free_vram < 8.0:
+    print("\n❌ ERRO CRÍTICO: GPU SUJA DETECTADA!")
+    print(
+        f"Você tem apenas {free_vram:.2f}GB livres. O modelo precisa de ~6GB + Contexto.")
+    print("👉 SOLUÇÃO: Vá em 'Ambiente de execução' > 'Reiniciar sessão' e tente novamente.")
+    sys.exit("⛔ Execução interrompida para proteger o ambiente.")
+
+print("✅ VRAM Suficiente. Prosseguindo...")
 
 # ==========================================
-# 📺 FUNÇÃO AUXILIAR DE LOGGING
+# 📺 LOGGING
 # ==========================================
 
 
@@ -58,28 +77,22 @@ def run_cmd(command, desc=None):
 PROJECT_ROOT_FOLDER = "planuze-llm-colab"
 
 # ==========================================
-# 🛠️ 1. SETUP DE AMBIENTE
+# 🛠️ 1. SETUP AMBIENTE
 # ==========================================
-print("🏗️ [1/6] Setup de Ambiente...")
-
+print("🏗️ [1/6] Setup...")
 if not os.path.exists('/content/drive'):
     drive.mount('/content/drive', force_remount=True)
 
-# 1.1 Localizar Projeto
 search_cmd = f"find /content/drive/MyDrive -type d -name '{PROJECT_ROOT_FOLDER}' -print -quit"
 project_path_list = os.popen(search_cmd).read().strip()
-
 if not project_path_list:
     raise FileNotFoundError(f"❌ Pasta '{PROJECT_ROOT_FOLDER}' não encontrada.")
-
 PROJECT_PATH = project_path_list
 print(f"✅ Diretório: {PROJECT_PATH}")
 
-# 1.2 Carregar .env
 env_path = os.path.join(PROJECT_PATH, ".env")
 if os.path.exists(env_path):
     load_dotenv(env_path)
-    print("✅ .env carregado.")
 else:
     raise FileNotFoundError("❌ .env não encontrado!")
 
@@ -102,27 +115,19 @@ def get_var(key, default=None, type_cast=str):
         return default
 
 
-# 1.3 Instalação Inteligente
 if importlib.util.find_spec("unsloth") is None:
-    print("\n📦 Instalando Stack Unsloth...")
+    print("\n📦 Instalando Stack...")
     run_cmd(
-        'pip install --no-deps "unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git" "unsloth_zoo"',
-        "Instalando Core & Zoo"
-    )
-    run_cmd(
-        'pip install --no-deps "xformers<0.0.29" "trl<0.9.0" peft accelerate bitsandbytes python-dotenv huggingface_hub tyro',
-        "Instalando Dependências"
-    )
+        'pip install --no-deps "unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git" "unsloth_zoo"', "Instalando Core")
+    run_cmd('pip install --no-deps "xformers<0.0.29" "trl<0.9.0" peft accelerate bitsandbytes python-dotenv huggingface_hub tyro', "Instalando Deps")
 else:
-    print("\n✅ Stack Unsloth já instalada. Pulando.")
+    print("\n✅ Stack já instalada.")
 
 # ==========================================
-# 🧠 2. IMPORTS E MODELO
+# 🧠 2. LOAD MODEL
 # ==========================================
 print("\n🧠 [2/6] Carregando Modelo...")
 
-
-# Autenticação
 hf_token = get_var("HF_TOKEN")
 if not hf_token:
     raise ValueError("❌ HF_TOKEN ausente.")
@@ -130,17 +135,10 @@ login(token=hf_token)
 username = HfApi().whoami()['name']
 repo_name = get_var("FINAL_MODEL_NAME", "planus_model")
 FULL_REPO_ID = f"{username}/{repo_name}"
-print(f"🎯 Target: {FULL_REPO_ID}")
 
-# Modelo
 model_name = get_var("MODEL_NAME", "unsloth/Qwen2.5-7B-Instruct")
 max_seq_length = get_var("MAX_SEQ_LENGTH", 1024, int)
 load_in_4bit = get_var("LOAD_IN_4BIT", True, bool)
-
-print(f"⚙️ Load: {model_name}")
-
-# Segunda camada de limpeza antes do load pesado
-torch.cuda.empty_cache()
 
 model, tokenizer = FastLanguageModel.from_pretrained(
     model_name=model_name,
@@ -161,48 +159,56 @@ model = FastLanguageModel.get_peft_model(
 )
 
 # ==========================================
-# 🔄 3. PREPARAÇÃO DO DATASET
+# 🔄 3. DATASET
 # ==========================================
 print("\n🔄 [3/6] Processando Dataset...")
 
-dataset_path = os.path.join(PROJECT_PATH, get_var("DATASET_PATH"))
-if not os.path.exists(dataset_path):
-    raise FileNotFoundError(f"❌ Dataset não encontrado: {dataset_path}")
+drive_dataset_path = os.path.join(PROJECT_PATH, get_var("DATASET_PATH"))
+if not os.path.exists(drive_dataset_path):
+    raise FileNotFoundError(f"❌ Dataset não encontrado: {drive_dataset_path}")
 
-raw_dataset = load_dataset("json", data_files=dataset_path, split="train")
+local_dataset_path = "/content/temp_dataset.jsonl"
+print(f"⚡ Copiando do Drive para Disco Local...")
+shutil.copy(drive_dataset_path, local_dataset_path)
+
+file_size = os.path.getsize(local_dataset_path) / (1024 * 1024)
+print(f"✅ Dataset carregado: {file_size:.2f} MB.")
+
+raw_dataset = load_dataset(
+    "json", data_files=local_dataset_path, split="train")
 
 
 def formatting_prompts_func(examples):
-    # ChatML Format
     if "messages" in examples:
         texts = [tokenizer.apply_chat_template(
             m, tokenize=False) for m in examples['messages']]
         return {"text": texts}
-
-    # Instruct Format
     texts = []
     instructions = examples.get(
         "instruction", [""] * len(examples.get("input", [])))
     inputs = examples.get("input", [""] * len(examples.get("output", [])))
     outputs = examples.get("output", [])
-
     for instruction, input, output in zip(instructions, inputs, outputs):
         text = f"<|im_start|>system\n{instruction}<|im_end|>\n<|im_start|>user\n{input}<|im_end|>\n<|im_start|>assistant\n{output}<|im_end|>"
         texts.append(text)
     return {"text": texts}
 
 
-print("⏳ Mapeando dataset...")
 dataset = raw_dataset.map(formatting_prompts_func, batched=True)
-print(f"✅ Dataset pronto! Colunas: {dataset.column_names}")
-
-if "text" not in dataset.column_names:
-    raise ValueError("❌ Erro Crítico: Coluna 'text' não criada.")
 
 # ==========================================
-# 🔥 4. EXECUÇÃO DO TREINO
+# 🔥 4. TREINO (EXTREME MEMORY SAFE)
 # ==========================================
-print("\n🔥 [4/6] Iniciando Trainer...")
+print("\n🔥 [4/6] Iniciando Trainer (T4 Optimized)...")
+
+# Força Batch Size 1 para garantir estabilidade
+original_batch = get_var("TRAINING_BATCH_SIZE", 2, int)
+safe_batch = 1
+# Compensa aumentando a acumulação
+safe_grad_accum = get_var(
+    "TRAINING_GRAD_ACCUMULATION", 4, int) * original_batch
+
+print(f"⚙️ Ajuste T4: Batch={safe_batch} | GradAccum={safe_grad_accum}")
 
 trainer = SFTTrainer(
     model=model,
@@ -213,9 +219,8 @@ trainer = SFTTrainer(
     dataset_num_proc=get_var("TRAINING_DATASET_NUM_PROC", 2, int),
     packing=False,
     args=TrainingArguments(
-        per_device_train_batch_size=get_var("TRAINING_BATCH_SIZE", 2, int),
-        gradient_accumulation_steps=get_var(
-            "TRAINING_GRAD_ACCUMULATION", 4, int),
+        per_device_train_batch_size=safe_batch,
+        gradient_accumulation_steps=safe_grad_accum,
         warmup_steps=get_var("TRAINING_WARMUP_STEPS", 10, int),
         max_steps=get_var("TRAINING_MAX_STEPS", 60, int),
         learning_rate=get_var("TRAINING_LEARNING_RATE", 2e-4, float),
@@ -234,7 +239,6 @@ trainer = SFTTrainer(
 print("🚀 TREINANDO...")
 trainer.train()
 
-# Backup
 backup_dir = os.path.join(PROJECT_PATH, get_var(
     "TRAINING_OUTPUT_DIR"), "final_adapter")
 print(f"\n💾 Salvando Backup: {backup_dir}")
@@ -242,17 +246,16 @@ model.save_pretrained(backup_dir)
 tokenizer.save_pretrained(backup_dir)
 
 # ==========================================
-# 🔨 5. COMPILAÇÃO LLAMA.CPP
+# 🔨 5. COMPILAÇÃO
 # ==========================================
 print("\n🔨 [5/6] Verificando Compilação...")
-
 if os.path.exists("/content/llama.cpp/build/bin/llama-quantize"):
-    print("✅ Binários compilados. Pulando.")
+    print("✅ Binários compilados.")
     os.system(
         "ln -sf /content/llama.cpp/build/bin/llama-quantize /content/llama.cpp/llama-quantize")
 else:
     print("⚠️ Compilando llama.cpp...")
-    compile_cmd = """
+    run_cmd("""
     cd /content
     rm -rf llama.cpp
     git clone --depth 1 https://github.com/ggerganov/llama.cpp
@@ -261,17 +264,16 @@ else:
     cd build
     cmake .. -DGGML_NATIVE=OFF
     cmake --build . --config Release -j 1
-    """
-    run_cmd(compile_cmd, "Compilando C++")
+    """, "Compilando C++")
 
     if os.path.exists("/content/llama.cpp/build/bin/llama-quantize"):
         os.system(
             "ln -sf /content/llama.cpp/build/bin/llama-quantize /content/llama.cpp/llama-quantize")
     else:
-        raise RuntimeError("❌ Erro compilação llama.cpp")
+        raise RuntimeError("❌ Erro compilação.")
 
 # ==========================================
-# ☁️ 6. EXPORTAÇÃO
+# ☁️ 6. UPLOAD
 # ==========================================
 print("\n☁️ [6/6] Upload Hugging Face...")
 quant_method = get_var("GGUF_QUANTIZATION", "q4_k_m")
