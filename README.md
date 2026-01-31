@@ -1,129 +1,157 @@
-# 🧠 Planuze LLM Engine
+# 🧠 Planus Finetuner - Guia de Utilização
 
-Este repositório contém um pipeline completo para **Fine-Tuning de Modelos de Linguagem (LLMs)** utilizando a biblioteca **Unsloth**. O projeto foi estruturado para facilitar o carregamento de modelos quantizados (4-bit), aplicação de adaptadores LoRA, treinamento supervisionado (SFT) e exportação para o formato GGUF.
+Este projeto automatiza a criação de um Assistente de IA Especializado (Planus) para o ERP Planuze. Ele utiliza documentos PDF/TXT para gerar conhecimento e treina modelos (Llama 3.1 ou Qwen 2.5) para responder perguntas técnicas seguindo regras de negócio estritas.
 
-## 🚀 Funcionalidades
+---
 
-- **Carregamento Otimizado**: Suporte a modelos 4-bit via Unsloth (ex: Llama-3, Qwen-2.5).
-- **Fine-Tuning Eficiente**: Uso de LoRA/QLoRA para adaptação de modelos grandes com menos memória.
-- **Pipeline de Dados**: Processamento automático de datasets no formato JSONL com templates de chat (formato Alpaca).
-- **Exportação GGUF**: Conversão automática do modelo treinado para GGUF, pronto para uso em ferramentas como Ollama, llama.cpp ou LM Studio.
-- **Configuração Modular**: Separação clara entre configurações de modelo, treino e projeto.
+## 🛠️ 1. Pré-requisitos
 
-## 📂 Estrutura do Projeto
+Antes de começar, certifique-se de que você possui:
+
+- **Para Gerar Dados:** Qualquer computador (Mac, Windows, Linux) com **Python 3.10+** e **Ollama** instalado.
+- **Para Treinar (Fine-Tuning):** Um servidor ou PC com **GPU NVIDIA** (mínimo 8GB VRAM, ideal 24GB RTX 3090/4090) rodando Linux ou WSL2.
+- **Contas:**
+  - **Hugging Face:** Token com permissão de leitura/escrita (para baixar/subir modelos).
+  - **WandB (Opcional):** Para acompanhar gráficos de treino em tempo real.
+
+---
+
+## 🚀 2. Configuração Inicial
+
+### 2.1. Clone e Ambiente Virtual
+
+```bash
+git clone <URL_DO_REPOSITORIO>
+cd planuze-llm
+
+# Crie o ambiente virtual (Python 3.10 recomendado)
+python3.10 -m venv venv
+source venv/bin/activate
+```
+
+### 2.2. Instalação de Dependências
+
+O projeto possui um **Makefile** para facilitar os comandos.
+
+- **Se estiver no Mac (apenas geração de dados):**
+  Abra o `requirements.txt` e comente as linhas abaixo de "DEPENDÊNCIAS EXCLUSIVAS NVIDIA". Execute:
+
+  ```bash
+  make install
+  ```
+
+- **Se estiver no Linux/GPU (para treino):**
+  Execute direto:
+  ```bash
+  make install
+  ```
+
+### 2.3. Variáveis de Ambiente
+
+Configure as variáveis copiando o exemplo:
+
+```bash
+cp .env.example .env
+```
+
+Edite o arquivo `.env`:
+
+- `HF_TOKEN`: Seu token do Hugging Face.
+- `OLLAMA_HOST`: URL do Ollama (padrão `http://localhost:11434`).
+- Configurações de diretórios (se quiser alterar os padrões).
+
+---
+
+## 📚 3. Fase de Dados (Rodar no Mac/Local)
+
+Transforme PDFs brutos em um dataset JSONL limpo para o treino.
+
+### Passo A: Ingestão de Documentos
+
+Coloque seus manuais, políticas e documentos técnicos (PDF ou TXT) na pasta:
+📂 **`data/source_documents/`**
+
+### Passo B: Geração e Processamento
+
+Para gerar os dados sintéticos via Ollama, fundir com dados manuais (se houver) e validar o dataset, apenas execute:
+
+```bash
+make data
+```
+
+> **O que esse comando faz?**
+>
+> 1. Executa `src/synthetic_data_gen.py`: Lê PDFs e usa o Ollama para criar pares Pergunta/Resposta.
+> 2. Executa `src/dataset_merger.py`: Junta os dados sintéticos com `data/raw/manual_rules.jsonl` (opcional), valida o JSON e embaralha.
+
+**Saída Final:** 📂 `data/processed/train_dataset_final.jsonl`
+
+---
+
+## 🏋️ 4. Fase de Treinamento (Rodar no Servidor GPU)
+
+Mova o projeto (ou a pasta `data/processed`) para a máquina com GPU.
+
+### Passo A: Configuração do Treino
+
+Abra o arquivo `main.py` e ajuste a configuração em `project_config`:
+
+- **Model Name:** `unsloth/Qwen2.5-32B-Instruct` ou `unsloth/Meta-Llama-3.1-8B-Instruct`.
+- **Max Steps:** `60` para testes rápidos, `300+` para produção.
+- **Final Model Name:** Caminho de saída (ex: `models/planus_qwen_v1`).
+
+### Passo B: Executar o Fine-Tuning
+
+```bash
+make train
+```
+
+> **O processo:**
+>
+> 1. Baixa o modelo base e aplica adaptadores LoRA.
+> 2. Inicia o treinamento supervisionado (SFT).
+> 3. Converte e salva o modelo final em formato GGUF na pasta `models/`.
+
+---
+
+## 💬 5. Fase de Uso (Deploy no Ollama)
+
+Com o modelo GGUF salvo, você pode testá-lo imediatamente no Ollama.
+
+Se o modelo foi salvo e você tem um `Modelfile` configurado na raiz (apontando para o GGUF gerado), execute:
+
+```bash
+make run
+```
+
+Isso irá criar o modelo `planus-pro` no seu Ollama local e abrir o chat interativo.
+
+---
+
+## 🔄 Resumo do Ciclo de Vida (Cheat Sheet)
+
+| Ação                             | Comando        |
+| :------------------------------- | :------------- |
+| **Instalar Dependências**        | `make install` |
+| **Gerar Dataset (PDF -> JSONL)** | `make data`    |
+| **Treinar Modelo (GPU)**         | `make train`   |
+| **Rodar Chat (Ollama)**          | `make run`     |
+| **Limpar Temporários**           | `make clean`   |
+
+---
+
+## 📂 Estrutura de Pastas
 
 ```text
 planuze-llm/
-├── config/              # Definições de configuração (Dataclasses)
-├── data/                # Diretório para datasets (raw/train_data.jsonl)
-├── outputs/             # Checkpoints de treinamento (gerado automaticamente)
-├── src/                 # Código fonte principal
-│   ├── data_handler.py  # Carregamento e formatação de dados
-│   ├── model_loader.py  # Gerenciamento do modelo e adapters
-│   ├── prompt_templates.py # Templates de prompt (Alpaca)
-│   └── trainer_engine.py   # Configuração do SFTTrainer
-├── main.py              # Ponto de entrada (Entrypoint)
-├── requirements.txt     # Dependências do projeto
-└── trial.json           # Arquivo de exemplo (se aplicável ao formato)
+├── config/             # Classes de configuração
+├── data/
+│   ├── source_documents/  # [ENTRADA] Seus PDFs aqui
+│   ├── raw/               # Dados intermediários (sintéticos/manuais)
+│   └── processed/         # [SAÍDA] Dataset final pronto para treino
+├── models/             # Onde o GGUF final será salvo
+├── src/                # Scripts de lógica (geração, treino, merge)
+├── .env                # Tokens e configurações
+├── Makefile            # Atalhos de comando
+└── main.py             # Script de treino
 ```
-
-## 🛠️ Pré-requisitos
-
-- **Python** 3.10 ou superior.
-- **GPU NVIDIA** (Recomendado para treino): Drivers CUDA instalados.
-  - _Nota_: O código é compatível com desenvolvimento em Mac/CPU (apenas para estruturação), mas o treinamento efetivo requer GPU compatível com CUDA se usar as features do Unsloth.
-
-## 📦 Instalação
-
-1. **Clone o repositório:**
-
-   ```bash
-   git clone <URL_DO_REPOSITORIO>
-   cd planuze-llm
-   ```
-
-2. **Crie um ambiente virtual:**
-
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # Linux/Mac
-   # ou
-   venv\Scripts\activate     # Windows
-   ```
-
-3. **Instale as dependências:**
-
-   ⚠️ **Atenção:** Verifique o arquivo `requirements.txt`.
-   - Se estiver em **Linux com GPU**, descomente as linhas referentes ao `unsloth`, `xformers` e `trl`.
-   - Se estiver em **MacOS** (sem GPU NVIDIA), mantenha as linhas do Unsloth comentadas.
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-## ⚙️ Configuração
-
-A configuração principal reside no arquivo `main.py` e `config/settings.py`.
-
-No `main.py`, você ajusta o objeto `ProjectConfig`:
-
-```python
-project_config = ProjectConfig(
-    model=ModelConfig(
-        model_name="unsloth/Qwen2.5-32B-Instruct", # Modelo base
-        max_seq_length=2048,
-        load_in_4bit=True
-    ),
-    training=TrainingConfig(
-        max_steps=60,         # Passos de treino
-        batch_size=2,         # Tamanho do batch
-        output_dir="outputs_checkpoints"
-    ),
-    dataset_path="data/raw/train_data.jsonl", # Caminho do dataset
-    final_model_name="models/planus_qwen_v1"  # Caminho de saída do GGUF
-)
-```
-
-## 📊 Formato dos Dados
-
-O script espera um arquivo **JSONL** (JSON Lines) localizado em `data/raw/train_data.jsonl` (ou conforme configurado).
-
-Cada linha deve conter um objeto JSON com os campos:
-
-- `instruction`: A instrução do usuário.
-- `input`: Contexto adicional.
-- `output`: A resposta esperada.
-
-**Exemplo:**
-
-```json
-{"instruction": "Resuma o texto.", "input": "O texto longo aqui...", "output": "Resumo aqui."}
-{"instruction": "Classifique o sentimento.", "input": "Eu adorei este produto!", "output": "Positivo"}
-```
-
-O template utilizado (definido em `src/prompt_templates.py`) segue o padrão **Alpaca**.
-
-## ▶️ Como Usar
-
-Com tudo configurado e dependências instaladas, execute o pipeline:
-
-```bash
-python main.py
-```
-
-O script irá:
-
-1. Carregar o modelo base.
-2. Aplicar os adaptadores LoRA.
-3. Carregar e formatar o dataset.
-4. Executar o treinamento.
-5. Salvar o modelo final em formato GGUF na pasta especificada.
-
-## ❓ Solução de Problemas
-
-- **FileNotFoundError**: Certifique-se de criar a pasta `data/raw` e adicionar o arquivo `train_data.jsonl`.
-- **Erro de Memória/CUDA**: Reduza o `batch_size` no `training` config ou use um modelo menor.
-
-## 📄 Licença
-
-Este projeto é de uso privado.
