@@ -34,9 +34,9 @@ data/processed/*
 # Se quiser versionar o dataset de exemplo, coloque um '!' na frente do arquivo específico
 data/raw/*
 !data/raw/.gitkeep
-data/processed/*
-!data/processed/.gitkeep
 
+data/source_documents/*
+!data/source_documents/.gitkeep
 # ==========================================
 # IDEs e Sistema Operacional
 # ==========================================

@@ -1,30 +1,21 @@
 """
 Script principal para execução do pipeline de treinamento do modelo.
 """
-from config.settings import ProjectConfig, ModelConfig, TrainingConfig
+
+from dotenv import load_dotenv
+
+from config.settings import ProjectConfig
 from src.model_loader import ModelManager
 from src.data_handler import load_and_process_data
 from src.trainer_engine import run_training
 
+# Carrega variáveis de ambiente
+load_dotenv()
+
 # ==========================================
 # CONFIGURAÇÃO DO PROJETO (Setup)
 # ==========================================
-project_config = ProjectConfig(
-    # Selecione o modelo aqui:
-    model=ModelConfig(
-        # Ou "unsloth/Meta-Llama-3.1-8B-Instruct"
-        model_name="unsloth/Qwen2.5-32B-Instruct",
-        max_seq_length=2048,
-        load_in_4bit=True
-    ),
-    training=TrainingConfig(
-        max_steps=60,  # Aumente para 300 em produção
-        batch_size=2,
-        output_dir="outputs_checkpoints"
-    ),
-    dataset_path="data/processed/train_dataset_final.jsonl",
-    final_model_name="models/planus_qwen_v1"  # Pasta onde salva o GGUF final
-)
+project_config = ProjectConfig.from_env()
 
 
 def main():
