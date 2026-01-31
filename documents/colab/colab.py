@@ -1,145 +1,143 @@
-# @title 🚀 Pipeline Master: Protocolo Planus (Unsloth + GGUF + Hugging Face)
-# @markdown Este script automatiza todo o processo documentado: Setup, Treino, Compilação Segura e Upload.
+# @title 🚀 Pipeline Master: Protocolo Planus (100% Driven by .env)
+# @markdown Este script lê TODAS as configurações do arquivo .env definido.
 
 from datasets import load_dataset
 from transformers import TrainingArguments
 from trl import SFTTrainer
 from unsloth import FastLanguageModel
 from huggingface_hub import login, HfApi
-from dotenv import load_dotenv
 import os
 import sys
+import json
 import torch
 from google.colab import drive
-import psutil
+from dotenv import load_dotenv
 
 # ==========================================
-# ⚙️ ZONA DE CONFIGURAÇÃO (Edite aqui)
+# ⚙️ CONFIGURAÇÃO DE BOOTSTRAP
 # ==========================================
-
-# Nome da pasta raiz do projeto no seu Google Drive
-# Exemplo: Se o zip foi extraído em "MyDrive/llm/meu-projeto", coloque "meu-projeto"
+# Precisamos apenas saber onde buscar o .env inicial
 PROJECT_ROOT_FOLDER = "planuze-llm-collab"
 
-# Caminho relativo do dataset dentro do projeto
-DATASET_RELATIVE_PATH = "data/processed/train_dataset_final.jsonl"
-
-# Nome que você quer dar ao modelo no Hugging Face
-MODEL_REPO_NAME = "planus-qwen-v1"
-
-# Configurações de Treino (Otimizadas para Tesla T4)
-MAX_SEQ_LENGTH = 1024  # 1024 é o limite seguro para T4. 2048 pode dar OOM.
-LOAD_IN_4BIT = True
-
 # ==========================================
-# 🛠️ 1. PREPARAÇÃO DO AMBIENTE
+# 🛠️ 1. PREPARAÇÃO E LEITURA DO AMBIENTE
 # ==========================================
-print("🏗️ [1/6] Preparando Ambiente e Montando Drive...")
+print("🏗️ [1/6] Montando Drive e Carregando Variáveis...")
 
-# 1.1 Montar Drive
 drive.mount('/content/drive', force_remount=True)
 
-# 1.2 Definir Caminhos Dinâmicos
-# Procura a pasta do projeto recursivamente para evitar erros de caminho
+# 1.1 Localizar Pasta do Projeto
 search_cmd = f"find /content/drive/MyDrive -type d -name '{PROJECT_ROOT_FOLDER}' -print -quit"
 project_path_list = os.popen(search_cmd).read().strip()
 
 if not project_path_list:
     raise FileNotFoundError(
-        f"❌ A pasta '{PROJECT_ROOT_FOLDER}' não foi encontrada no seu Drive via busca.")
+        f"❌ A pasta '{PROJECT_ROOT_FOLDER}' não foi encontrada.")
 
 PROJECT_PATH = project_path_list
-print(f"✅ Diretório do Projeto localizado: {PROJECT_PATH}")
+print(f"✅ Diretório do Projeto: {PROJECT_PATH}")
 
-# 1.3 Instalar Dependências (Silencioso)
-print("📦 Instalando Unsloth e dependências (pode levar 2-3 min)...")
+# 1.2 Carregar .env
+env_path = os.path.join(PROJECT_PATH, ".env")
+if os.path.exists(env_path):
+    load_dotenv(env_path)
+    print("✅ .env carregado com sucesso.")
+else:
+    raise FileNotFoundError(
+        "❌ Arquivo .env não encontrado! O script depende dele.")
+
+# --- HELPER: Conversor de Tipos do .env ---
+
+
+def get_var(key, default=None, type_cast=str):
+    val = os.getenv(key)
+    if val is None:
+        return default
+    try:
+        if type_cast == bool:
+            return val.lower() in ('true', '1', 't')
+        if type_cast == int:
+            return int(val)
+        if type_cast == float:
+            return float(val)
+        if type_cast == list:
+            # Converte string '["a","b"]' em lista Python
+            return json.loads(val)
+        return str(val)
+    except Exception as e:
+        print(f"⚠️ Erro ao converter variável {key}: {e}")
+        return default
+
+
+# 1.3 Instalar Dependências
+print("📦 Instalando Unsloth (Isso usa as configs do .env na próxima etapa)...")
 !pip install - -no-deps - q "unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git"
 !pip install - -no-deps - q "xformers<0.0.29" "trl<0.9.0" peft accelerate bitsandbytes python-dotenv huggingface_hub
 
 # ==========================================
-# 🔐 2. AUTENTICAÇÃO E CONFIGURAÇÃO
+# 🔐 2. AUTENTICAÇÃO
 # ==========================================
-print("\n🔐 [2/6] Configurando Autenticação...")
 
-
-# 2.1 Carregar .env
-env_path = os.path.join(PROJECT_PATH, ".env")
-if os.path.exists(env_path):
-    load_dotenv(env_path)
-    print("✅ Arquivo .env carregado.")
-else:
-    print(
-        f"⚠️ .env não encontrado em {env_path}. Tentando variáveis de ambiente do sistema.")
-
-# 2.2 Login no Hugging Face
-hf_token = os.getenv("HF_TOKEN")
+hf_token = get_var("HF_TOKEN")
 if not hf_token:
-    raise ValueError(
-        "❌ ERRO CRÍTICO: HF_TOKEN não encontrado. Verifique seu .env.")
+    raise ValueError("❌ HF_TOKEN ausente no .env")
 
-try:
-    login(token=hf_token)
-    api = HfApi()
-    user_info = api.whoami()
-    username = user_info['name']
-
-    # Validação de Permissão de Escrita
-    if 'write' not in user_info['auth']['accessToken']['role'] and user_info['auth']['accessToken']['role'] != 'write':
-        # Nota: A API as vezes retorna estruturas diferentes, mas tentamos validar.
-        print("⚠️ AVISO: Verifique se seu token tem permissão 'WRITE'. Tokens 'READ' falharão no upload.")
-
-    FULL_REPO_ID = f"{username}/{MODEL_REPO_NAME}"
-    print(f"✅ Autenticado como: {username}")
-    print(f"🎯 Target Repo: {FULL_REPO_ID}")
-
-except Exception as e:
-    raise RuntimeError(f"❌ Falha na autenticação com Hugging Face: {e}")
+login(token=hf_token)
+username = HfApi().whoami()['name']
+# Constrói o Repo ID usando o nome definido no .env
+repo_name = get_var("FINAL_MODEL_NAME", "planus_model")
+FULL_REPO_ID = f"{username}/{repo_name}"
+print(f"🎯 Target Repo: {FULL_REPO_ID}")
 
 # ==========================================
-# 🧠 3. TREINAMENTO (UNSLOTH)
+# 🧠 3. TREINAMENTO (Config via .env)
 # ==========================================
-print("\n🧠 [3/6] Iniciando Rotina de Treino...")
+print("\n🧠 [3/6] Iniciando Treino com Parâmetros do .env...")
 
 
-# 3.1 Carregar Modelo Base
+# 3.1 Carregar Modelo
+max_seq_length = get_var("MAX_SEQ_LENGTH", 1024, int)
+load_in_4bit = get_var("LOAD_IN_4BIT", True, bool)
+model_name = get_var("MODEL_NAME", "unsloth/Qwen2.5-7B-Instruct")
+
+print(
+    f"⚙️ Model: {model_name} | Context: {max_seq_length} | 4bit: {load_in_4bit}")
+
 model, tokenizer = FastLanguageModel.from_pretrained(
-    model_name="unsloth/Qwen2.5-7B-Instruct",
-    max_seq_length=MAX_SEQ_LENGTH,
+    model_name=model_name,
+    max_seq_length=max_seq_length,
     dtype=None,
-    load_in_4bit=LOAD_IN_4BIT,
+    load_in_4bit=load_in_4bit,
 )
 
 # 3.2 Configurar LoRA
+# Aqui usamos json.loads para pegar a lista correta do .env
+target_modules = get_var("LORA_TARGET_MODULES", ["q_proj", "k_proj"], list)
+
 model = FastLanguageModel.get_peft_model(
     model,
-    r=16,
-    target_modules=["q_proj", "k_proj", "v_proj",
-                    "o_proj", "gate_proj", "up_proj", "down_proj"],
-    lora_alpha=16,
-    lora_dropout=0,
+    r=get_var("LORA_R", 16, int),
+    target_modules=target_modules,
+    lora_alpha=get_var("LORA_ALPHA", 16, int),
+    lora_dropout=get_var("LORA_DROPOUT", 0, float),
     bias="none",
     use_gradient_checkpointing="unsloth",
-    random_state=3407,
+    random_state=get_var("TRAINING_SEED", 3407, int),
 )
 
 # 3.3 Carregar Dataset
-dataset_full_path = os.path.join(PROJECT_PATH, DATASET_RELATIVE_PATH)
-if not os.path.exists(dataset_full_path):
-    raise FileNotFoundError(
-        f"❌ Dataset não encontrado em: {dataset_full_path}")
+dataset_path = os.path.join(PROJECT_PATH, get_var("DATASET_PATH"))
+if not os.path.exists(dataset_path):
+    raise FileNotFoundError(f"❌ Dataset não encontrado: {dataset_path}")
 
-dataset = load_dataset("json", data_files=dataset_full_path, split="train")
-print(f"📚 Dataset carregado: {len(dataset)} registros.")
+dataset = load_dataset("json", data_files=dataset_path, split="train")
 
-# Formatação do Prompt (Alpaca/ChatML Style)
+# Formatação ChatML
 
 
 def formatting_prompts_func(examples):
-    # Adapte esta função se seu JSONL tiver chaves diferentes de instruction/input/output
-    if "messages" in examples:  # Suporte a formato chat direto
+    if "messages" in examples:
         return {"text": [tokenizer.apply_chat_template(m, tokenize=False) for m in examples['messages']]}
-
-    # Fallback genérico
     texts = []
     for instruction, input, output in zip(examples.get("instruction", []), examples.get("input", []), examples.get("output", [])):
         text = f"<|im_start|>system\n{instruction}<|im_end|>\n<|im_start|>user\n{input}<|im_end|>\n<|im_start|>assistant\n{output}<|im_end|>"
@@ -147,80 +145,59 @@ def formatting_prompts_func(examples):
     return {"text": texts, }
 
 
-# 3.4 Configurar Treinador
+# 3.4 Treinador
 trainer = SFTTrainer(
     model=model,
     tokenizer=tokenizer,
     train_dataset=dataset,
     dataset_text_field="text",
-    max_seq_length=MAX_SEQ_LENGTH,
-    dataset_num_proc=2,
+    max_seq_length=max_seq_length,
+    dataset_num_proc=get_var("TRAINING_DATASET_NUM_PROC", 2, int),
     packing=False,
     args=TrainingArguments(
-        per_device_train_batch_size=2,
-        gradient_accumulation_steps=4,
-        warmup_steps=10,
-        max_steps=100,  # Ajuste conforme necessário
-        learning_rate=2e-4,
+        per_device_train_batch_size=get_var("TRAINING_BATCH_SIZE", 2, int),
+        gradient_accumulation_steps=get_var(
+            "TRAINING_GRAD_ACCUMULATION", 4, int),
+        warmup_steps=get_var("TRAINING_WARMUP_STEPS", 10, int),
+        max_steps=get_var("TRAINING_MAX_STEPS", 60, int),
+        learning_rate=get_var("TRAINING_LEARNING_RATE", 2e-4, float),
         fp16=not torch.cuda.is_bf16_supported(),
         bf16=torch.cuda.is_bf16_supported(),
         logging_steps=1,
-        optim="adamw_8bit",
-        weight_decay=0.01,
-        lr_scheduler_type="linear",
-        seed=3407,
+        optim=get_var("TRAINING_OPTIM", "adamw_8bit"),
+        weight_decay=get_var("TRAINING_WEIGHT_DECAY", 0.01, float),
+        lr_scheduler_type=get_var("TRAINING_LR_SCHEDULER", "linear"),
+        seed=get_var("TRAINING_SEED", 3407, int),
         output_dir="outputs",
     ),
 )
 
-# 3.5 Executar Treino
-print("🔥 Treinando...")
-trainer_stats = trainer.train()
-print("✅ Treino concluído!")
+print("🔥 Iniciando Treino...")
+trainer.train()
+print("✅ Treino Concluído.")
 
-# 3.6 Salvar Adaptadores Localmente (Backup no Drive)
-backup_dir = os.path.join(PROJECT_PATH, "outputs_checkpoints", "final_adapter")
+# Backup no Drive
+backup_dir = os.path.join(PROJECT_PATH, get_var(
+    "TRAINING_OUTPUT_DIR"), "final_adapter")
 model.save_pretrained(backup_dir)
 tokenizer.save_pretrained(backup_dir)
-print(f"💾 Backup dos adaptadores salvo em: {backup_dir}")
 
 # ==========================================
-# 🔨 4. COMPILAÇÃO DO LLAMA.CPP (A PROVA DE FALHAS)
+# 🔨 4. COMPILAÇÃO (Mantida igual pela segurança)
 # ==========================================
-print("\n🔨 [4/6] Compilando llama.cpp (Modo Seguro -j 1)...")
-
-# Script Shell embutido para garantir ambiente limpo
-shell_script = """
-cd /content
-rm -rf llama.cpp
-git clone --depth 1 https://github.com/ggerganov/llama.cpp
-cd llama.cpp
-mkdir build
-cd build
-cmake .. -DGGML_NATIVE=OFF
-cmake --build . --config Release -j 1
-"""
-os.system(shell_script)
-
-# Link Simbólico Crítico
+print("\n🔨 [4/6] Compilando llama.cpp...")
+os.system("cd /content && rm -rf llama.cpp && git clone --depth 1 https://github.com/ggerganov/llama.cpp && cd llama.cpp && mkdir build && cd build && cmake .. -DGGML_NATIVE=OFF && cmake --build . --config Release -j 1")
 if os.path.exists("/content/llama.cpp/build/bin/llama-quantize"):
     os.system(
         "ln -sf /content/llama.cpp/build/bin/llama-quantize /content/llama.cpp/llama-quantize")
-    print("✅ Compilação OK e Link Simbólico criado.")
 else:
-    raise RuntimeError(
-        "❌ Erro na compilação do llama.cpp. Binário não encontrado.")
+    raise RuntimeError("Erro na compilação do llama.cpp")
 
 # ==========================================
-# ☁️ 5. EXPORTAÇÃO E UPLOAD
+# ☁️ 5. EXPORTAÇÃO
 # ==========================================
-print("\n☁️ [5/6] Iniciando Conversão GGUF e Upload...")
-
-# Define o método de quantização
-quant_method = "q4_k_m"
-
-print(f"🚀 Enviando para Hugging Face: {FULL_REPO_ID}")
-print("☕ Isso pode levar alguns minutos (Conversão + Upload de ~5GB)...")
+print("\n☁️ [5/6] Upload para Hugging Face...")
+quant_method = get_var("GGUF_QUANTIZATION", "q4_k_m")
 
 try:
     model.push_to_hub_gguf(
@@ -229,18 +206,6 @@ try:
         quantization_method=quant_method,
         token=hf_token
     )
-    print("\n🎉 ===================================================")
-    print(f"✅ SUCESSO ABSOLUTO! O MODELO ESTÁ ONLINE.")
-    print(f"🔗 Link: https://huggingface.co/{FULL_REPO_ID}")
-    print("======================================================")
-
+    print(f"✅ SUCESSO! Modelo em: https://huggingface.co/{FULL_REPO_ID}")
 except Exception as e:
-    print(f"\n❌ Erro no Upload Automático: {e}")
-    print("💡 Tentativa de recuperação: Verifique se o repo já existe ou tente upload manual do arquivo .gguf gerado.")
-
-# ==========================================
-# 🏁 6. INSTRUÇÕES FINAIS
-# ==========================================
-print("\n🏁 [6/6] Próximos Passos (No seu Mac):")
-print(f"1. Instale o Ollama: brew install ollama")
-print(f"2. Rode direto: ollama run hf.co/{FULL_REPO_ID}")
+    print(f"❌ Erro no upload: {e}")
