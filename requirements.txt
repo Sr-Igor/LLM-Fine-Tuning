@@ -17,6 +17,9 @@ python-dotenv
 torch
 transformers
 
+# Apenas para script do google colab
+google
+
 # ==========================================
 # 🛑 DEPENDÊNCIAS EXCLUSIVAS NVIDIA (GPU / LINUX) 🛑
 # ==========================================

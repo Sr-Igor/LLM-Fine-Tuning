@@ -21,7 +21,7 @@ install:
 # Roda o pipeline de dados completo (Gerar -> Merge)
 data:
 	PYTHONPATH=. $(PYTHON) src/core/synthetic_data_gen.py
-	$(PYTHON) src/core/dataset_merger.py
+# 	$(PYTHON) src/core/dataset_merger.py
 
 merge:
 	$(PYTHON) src/core/dataset_merger.py

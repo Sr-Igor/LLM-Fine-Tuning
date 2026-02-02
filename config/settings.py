@@ -110,6 +110,7 @@ class SyntheticConfig:
     system_instruction: str
     chunk_size: int = 2000
     overlap: int = 200
+    examples_per_chunk: int = 6  # Número de exemplos por chunk
     chat_subject: str = "TEMA"
     chat_context: str = "CONTEXTO"
     chat_question: str = "PERGUNTA"
@@ -128,6 +129,8 @@ class SyntheticConfig:
             system_instruction=os.getenv("SYNTHETIC_SYSTEM_INSTRUCTION", ""),
             chunk_size=int(os.getenv("SYNTHETIC_CHUNK_SIZE", "2000")),
             overlap=int(os.getenv("SYNTHETIC_OVERLAP", "200")),
+            examples_per_chunk=int(
+                os.getenv("SYNTHETIC_EXAMPLES_PER_CHUNK", "6")),
             chat_subject=os.getenv("AI_CHAT_SUBJECT", "SUBJECT"),
             chat_context=os.getenv("AI_CHAT_CONTEXT", "CONTEXT"),
             chat_question=os.getenv("AI_CHAT_QUESTION", "QUESTION"),
