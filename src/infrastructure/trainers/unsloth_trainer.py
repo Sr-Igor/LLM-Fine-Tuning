@@ -5,10 +5,10 @@ from ...domain.interfaces.trainer import ITrainer
 
 # Lazy imports to avoid errors on non-CUDA environments
 try:
-    import torch
+    import torch  # type: ignore # pylint: disable=import-error
     from transformers import TrainingArguments
-    from trl import SFTTrainer
-    from unsloth import FastLanguageModel
+    from trl import SFTTrainer  # type: ignore # pylint: disable=import-error
+    from unsloth import FastLanguageModel  # type: ignore # pylint: disable=import-error
 except ImportError:
     FastLanguageModel = None
     SFTTrainer = None
@@ -145,6 +145,6 @@ class UnslothTrainerAdapter(ITrainer):
         # This is a bit tricky since we defined JSONLDataRepository.
         # Ideally we should use the repository, but SFTTrainer expects a HF Dataset or similar.
         # For now, simplistic implementation using `datasets` library if available
-        from datasets import load_dataset
+        from datasets import load_dataset  # type: ignore # pylint: disable=import-error
 
         return load_dataset("json", data_files=path, split="train")
