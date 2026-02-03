@@ -1,9 +1,9 @@
 # Makefile for src2 (Planuze LLM Refactored)
 
 PYTHON := python3
-PIP := $(PYTHON) -m pip
 VENV := .venv
 PYTHON_VENV := $(VENV)/bin/python
+PIP := $(PYTHON_VENV) -m pip
 
 # Environment Variables
 export PYTHONPATH=.
@@ -18,11 +18,14 @@ NC := \033[0m
 # MAIN COMMANDS
 # ============================================================================
 
-.PHONY: help mlx\:install cuda\:install mlx\:prepare mlx\:train cuda\:train mlx\:full cuda\:full mlx\:publish cuda\:publish
+.PHONY: help venv mlx\:install cuda\:install mlx\:prepare mlx\:train cuda\:train mlx\:full cuda\:full mlx\:publish cuda\:publish
 
 help:
 	@echo "$(GREEN)LLM Project $(NC)"
 	@echo "Available commands:"
+	@echo ""
+	@echo "Setup:"
+	@echo "  make venv            - Create virtual environment"
 	@echo ""
 	@echo "MLX Commands:"
 	@echo "  make mlx:install     - Install dependencies"
@@ -38,12 +41,17 @@ help:
 	@echo "  make cuda:publish    - Publish model to HF"
 
 
-mlx\:install:
+venv:
+	@echo "$(YELLOW)Ensuring virtual environment (.venv) exists...$(NC)"
+	@bash scripts/venv.sh
+	@echo "$(YELLOW)To activate in your shell, run: source scripts/venv.sh$(NC)"
+
+mlx\:install: venv
 	@echo "$(YELLOW)Installing dependencies (Default/Apple)...$(NC)"
 	$(PIP) install -r requirements/global.txt
 	$(PIP) install -r requirements/apple.txt
 
-cuda\:install:
+cuda\:install: venv
 	@echo "$(YELLOW)Installing dependencies (CUDA)...$(NC)"
 	$(PIP) install -r requirements/global.txt
 	$(PIP) install -r requirements/cuda.txt
