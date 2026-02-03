@@ -48,6 +48,11 @@ class MLXTrainerAdapter(ITrainer):
         if c.training.mlx_grad_checkpoint:
             cmd.append("--grad-checkpoint")
 
+        if c.training.wandb_project:
+            cmd.append("--log-to-wandb")
+            cmd.append("--wandb-project")
+            cmd.append(c.training.wandb_project)
+
         return cmd
 
     def train(self, config: ProjectConfig) -> Dict[str, Any]:

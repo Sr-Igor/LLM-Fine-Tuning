@@ -17,6 +17,7 @@ class ModelConfig:
     max_seq_length: int = 2048
     load_in_4bit: bool = True
     dtype: Optional[str] = None
+    hf_repo_id: Optional[str] = None  # Repo para upload (ex: user/repo)
 
 
 @dataclass
@@ -62,6 +63,10 @@ class TrainingConfig:
     steps_per_report: int = 10
     save_every_steps: int = 100
     val_batches: int = 25
+
+    # Monitoring
+    wandb_project: Optional[str] = None
+    wandb_watch: str = "false"
 
 
 @dataclass

@@ -62,20 +62,16 @@ class Settings:
                 "MODEL_NAME",
                 os.getenv("CUDA_MODEL_NAME", "unsloth/Qwen2.5-7B-Instruct"),
             )
-            max_seq = int(
-                os.getenv("MAX_SEQ_LENGTH", os.getenv("CUDA_MAX_SEQ_LENGTH", "2048"))
-            )
+            max_seq = int(os.getenv("MAX_SEQ_LENGTH", os.getenv("CUDA_MAX_SEQ_LENGTH", "2048")))
             load_4bit = (
-                os.getenv(
-                    "LOAD_IN_4BIT", os.getenv("CUDA_LOAD_IN_4BIT", "true")
-                ).lower()
-                == "true"
+                os.getenv("LOAD_IN_4BIT", os.getenv("CUDA_LOAD_IN_4BIT", "true")).lower() == "true"
             )
             return ModelConfig(
                 name=model_name,
                 max_seq_length=max_seq,
                 load_in_4bit=load_4bit,
                 dtype=None,
+                hf_repo_id=os.getenv("HF_REPO_ID"),
             )
 
         # Default MLX
@@ -87,6 +83,7 @@ class Settings:
             name=model_name,
             max_seq_length=int(os.getenv("APPLE_MAX_SEQ_LENGTH", "2048")),
             load_in_4bit=True,  # Forçado para MLX 4bit quant models geralmente
+            hf_repo_id=os.getenv("HF_REPO_ID"),
         )
 
     @staticmethod
@@ -97,9 +94,7 @@ class Settings:
             return LoRAConfig(
                 r=int(os.getenv("LORA_R", os.getenv("CUDA_LORA_RANK", "16"))),
                 alpha=int(os.getenv("LORA_ALPHA", os.getenv("CUDA_LORA_ALPHA", "16"))),
-                dropout=float(
-                    os.getenv("LORA_DROPOUT", os.getenv("CUDA_LORA_DROPOUT", "0.0"))
-                ),
+                dropout=float(os.getenv("LORA_DROPOUT", os.getenv("CUDA_LORA_DROPOUT", "0.0"))),
                 quantization_method=os.getenv("GGUF_QUANTIZATION", "q4_k_m"),
             )
 
@@ -116,12 +111,8 @@ class Settings:
         backend = os.getenv("TRAINING_BACKEND", "mlx").lower()
         if backend == "unsloth":
             return TrainingConfig(
-                batch_size=int(
-                    os.getenv("TRAINING_BATCH_SIZE", os.getenv("CUDA_BATCH_SIZE", "2"))
-                ),
-                max_steps=int(
-                    os.getenv("TRAINING_MAX_STEPS", os.getenv("CUDA_NUM_ITERS", "60"))
-                ),
+                batch_size=int(os.getenv("TRAINING_BATCH_SIZE", os.getenv("CUDA_BATCH_SIZE", "2"))),
+                max_steps=int(os.getenv("TRAINING_MAX_STEPS", os.getenv("CUDA_NUM_ITERS", "60"))),
                 learning_rate=float(
                     os.getenv(
                         "TRAINING_LEARNING_RATE",
@@ -134,6 +125,8 @@ class Settings:
                 save_every_steps=100,
                 mlx_use_metal=False,
                 mlx_grad_checkpoint=True,
+                wandb_project=os.getenv("WANDB_PROJECT"),
+                wandb_watch=os.getenv("WANDB_WATCH", "false"),
             )
 
         return TrainingConfig(
@@ -145,8 +138,9 @@ class Settings:
             val_batches=int(os.getenv("APPLE_VAL_BATCHES", "25")),
             save_every_steps=int(os.getenv("APPLE_SAVE_EVERY", "100")),
             mlx_use_metal=os.getenv("APPLE_USE_METAL", "true").lower() == "true",
-            mlx_grad_checkpoint=os.getenv("APPLE_GRAD_CHECKPOINT", "true").lower()
-            == "true",
+            mlx_grad_checkpoint=os.getenv("APPLE_GRAD_CHECKPOINT", "true").lower() == "true",
+            wandb_project=os.getenv("WANDB_PROJECT"),
+            wandb_watch=os.getenv("WANDB_WATCH", "false"),
         )
 
     @staticmethod
@@ -164,8 +158,7 @@ class Settings:
                     "FINAL_MODEL_NAME",
                     os.getenv("CUDA_FUSED_MODEL", "models/fused_cuda"),
                 ),
-                gguf_output_path=os.getenv("FINAL_MODEL_NAME", "models/final")
-                + ".gguf",
+                gguf_output_path=os.getenv("FINAL_MODEL_NAME", "models/final") + ".gguf",
             )
 
         return DataConfig(

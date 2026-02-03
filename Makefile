@@ -18,7 +18,7 @@ NC := \033[0m
 # COMANDOS PRINCIPAIS
 # ============================================================================
 
-.PHONY: help mlx\:install cuda\:install mlx\:prepare mlx\:train cuda\:train mlx\:full cuda\:full
+.PHONY: help mlx\:install cuda\:install mlx\:prepare mlx\:train cuda\:train mlx\:full cuda\:full mlx\:publish cuda\:publish
 
 help:
 	@echo "$(GREEN)LLM Project $(NC)"
@@ -29,11 +29,13 @@ help:
 	@echo "  make mlx:prepare     - Prepara dados"
 	@echo "  make mlx:train       - Executa treinamento"
 	@echo "  make mlx:full        - Pipeline completo"
+	@echo "  make mlx:publish     - Publica modelo no HF"
 	@echo ""
 	@echo "CUDA Commands:"
 	@echo "  make cuda:install    - Instala dependências"
 	@echo "  make cuda:train      - Executa treinamento"
 	@echo "  make cuda:full       - Pipeline completo"
+	@echo "  make cuda:publish    - Publica modelo no HF"
 
 
 mlx\:install:
@@ -65,6 +67,14 @@ mlx\:full:
 cuda\:full:
 	@echo "$(YELLOW)Executando pipeline completo (CUDA)...$(NC)"
 	TRAINING_BACKEND=unsloth $(PYTHON_VENV) -m src.adapters.cli.main full
+
+mlx\:publish:
+	@echo "$(YELLOW)Publicando modelo MLX...$(NC)"
+	TRAINING_BACKEND=mlx $(PYTHON_VENV) -m src.adapters.cli.main publish
+
+cuda\:publish:
+	@echo "$(YELLOW)Publicando modelo CUDA...$(NC)"
+	TRAINING_BACKEND=unsloth $(PYTHON_VENV) -m src.adapters.cli.main publish
 
 lint:
 	@echo "$(YELLOW)Verificando código...$(NC)"

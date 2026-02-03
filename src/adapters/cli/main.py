@@ -29,6 +29,17 @@ class CLI:
         self.container = Container()
         self.presenter = self.container.presenter
 
+    def _run_publish(self):
+        """Execute the model publishing use case."""
+        self.presenter.show_panel(
+            "Publicação",
+            {
+                "Repo": self.container.config.model.hf_repo_id,
+            },
+        )
+        use_case = self.container.get_publish_model_use_case()
+        use_case.execute(self.container.config)
+
     def run(self, args: List[str]):
         """Parse arguments and execute the requested command."""
         parser = argparse.ArgumentParser(description="Planuze LLM CLI")
@@ -36,15 +47,16 @@ class CLI:
 
         # Command: prepare
         prepare_parser = subparsers.add_parser("prepare", help="Preparar dados")
-        prepare_parser.add_argument(
-            "--val-ratio", type=float, default=0.1, help="Ratio validação"
-        )
+        prepare_parser.add_argument("--val-ratio", type=float, default=0.1, help="Ratio validação")
 
         # Command: train
         subparsers.add_parser("train", help="Treinar modelo")
 
         # Command: full
         subparsers.add_parser("full", help="Pipeline completo (Prepare + Train)")
+
+        # Command: publish
+        subparsers.add_parser("publish", help="Publicar modelo no Hugging Face")
 
         parsed_args = parser.parse_args(args)
 
@@ -60,6 +72,8 @@ class CLI:
             elif parsed_args.command == "full":
                 self._run_prepare(parsed_args)
                 self._run_train()
+            elif parsed_args.command == "publish":
+                self._run_publish()
 
         except Exception as e:
             self.presenter.log(f"Erro fatal: {str(e)}", "error")

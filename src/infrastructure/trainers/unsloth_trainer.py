@@ -19,6 +19,8 @@ except ImportError:
 class UnslothTrainerAdapter(ITrainer):
     """Adaptador para treinamento usando Unsloth (CUDA)."""
 
+    ERR_UNSLOTH_NOT_INSTALLED = "Unsloth is not installed."
+
     def __init__(self, presenter):
         """Initialize the UnslothTrainerAdapter with a presenter."""
         self.presenter = presenter
@@ -68,6 +70,7 @@ class UnslothTrainerAdapter(ITrainer):
             lr_scheduler_type="linear",
             seed=config.training.seed,
             output_dir=config.data.output_dir,
+            report_to="wandb" if config.training.wandb_project else "none",
         )
 
         trainer = SFTTrainer(
@@ -97,7 +100,7 @@ class UnslothTrainerAdapter(ITrainer):
     def fuse_adapters(self, config: ProjectConfig) -> str:
         """Fuse the LoRA adapters into the base model."""
         if FastLanguageModel is None:
-            raise ImportError("Unsloth is not installed.")
+            raise ImportError(self.ERR_UNSLOTH_NOT_INSTALLED)
 
         self.presenter.log(f"Loading model for fusion: {config.data.adapter_path}", "info")
         model, tokenizer = FastLanguageModel.from_pretrained(
@@ -118,7 +121,7 @@ class UnslothTrainerAdapter(ITrainer):
     def export_to_gguf(self, config: ProjectConfig) -> str:
         """Export the trained model to GGUF format."""
         if FastLanguageModel is None:
-            raise ImportError("Unsloth is not installed.")
+            raise ImportError(self.ERR_UNSLOTH_NOT_INSTALLED)
 
         self.presenter.log(f"Exporting to GGUF: {config.data.gguf_output_path}", "info")
 

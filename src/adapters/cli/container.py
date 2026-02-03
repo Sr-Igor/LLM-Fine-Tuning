@@ -7,9 +7,11 @@ presenters, repositories, and trainers.
 """
 
 from ...application.prepare_data import PrepareDataUseCase
+from ...application.publish_model import PublishModelUseCase
 from ...application.train_model import TrainModelUseCase
 from ...config.settings import Settings
 from ...infrastructure.repositories.jsonl_repository import JSONLDataRepository
+from ...infrastructure.services.hf_publisher import HuggingFacePublisher
 from ...infrastructure.trainers.mlx_trainer import MLXTrainerAdapter
 from ...infrastructure.trainers.unsloth_trainer import UnslothTrainerAdapter
 from ...infrastructure.ui.terminal_presenter import TerminalPresenter
@@ -24,6 +26,7 @@ class Container:
         self._presenter = None
         self._repository = None
         self._trainer = None
+        self._publisher = None
 
     @property
     def config(self):
@@ -57,6 +60,13 @@ class Container:
                 self._trainer = MLXTrainerAdapter(self.presenter)
         return self._trainer
 
+    @property
+    def publisher(self):
+        """Provide access to the model publisher instance."""
+        if not self._publisher:
+            self._publisher = HuggingFacePublisher(self.presenter)
+        return self._publisher
+
     # Use Cases Factories
 
     def get_prepare_data_use_case(self) -> PrepareDataUseCase:
@@ -66,3 +76,7 @@ class Container:
     def get_train_model_use_case(self) -> TrainModelUseCase:
         """Create and return an instance of the TrainModelUseCase."""
         return TrainModelUseCase(self.trainer)
+
+    def get_publish_model_use_case(self) -> PublishModelUseCase:
+        """Create and return an instance of the PublishModelUseCase."""
+        return PublishModelUseCase(self.publisher)
