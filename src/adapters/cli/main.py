@@ -32,7 +32,7 @@ class CLI:
     def _run_publish(self):
         """Execute the model publishing use case."""
         self.presenter.show_panel(
-            "Publicação",
+            "Publication",
             {
                 "Repo": self.container.config.model.hf_repo_id,
             },
@@ -43,20 +43,22 @@ class CLI:
     def run(self, args: List[str]):
         """Parse arguments and execute the requested command."""
         parser = argparse.ArgumentParser(description="Planuze LLM CLI")
-        subparsers = parser.add_subparsers(dest="command", help="Comando a executar")
+        subparsers = parser.add_subparsers(dest="command", help="Command to execute")
 
         # Command: prepare
-        prepare_parser = subparsers.add_parser("prepare", help="Preparar dados")
-        prepare_parser.add_argument("--val-ratio", type=float, default=0.1, help="Ratio validação")
+        prepare_parser = subparsers.add_parser("prepare", help="Prepare data")
+        prepare_parser.add_argument(
+            "--val-ratio", type=float, default=0.1, help="Validation validation"
+        )
 
         # Command: train
-        subparsers.add_parser("train", help="Treinar modelo")
+        subparsers.add_parser("train", help="Train model")
 
         # Command: full
-        subparsers.add_parser("full", help="Pipeline completo (Prepare + Train)")
+        subparsers.add_parser("full", help="Full pipeline (Prepare + Train)")
 
         # Command: publish
-        subparsers.add_parser("publish", help="Publicar modelo no Hugging Face")
+        subparsers.add_parser("publish", help="Publish model to Hugging Face")
 
         parsed_args = parser.parse_args(args)
 
@@ -76,12 +78,12 @@ class CLI:
                 self._run_publish()
 
         except Exception as e:
-            self.presenter.log(f"Erro fatal: {str(e)}", "error")
+            self.presenter.log(f"Fatal error: {str(e)}", "error")
             sys.exit(1)
 
     def _run_prepare(self, args):
         """Execute the data preparation use case."""
-        self.presenter.show_panel("Preparação de Dados", {"Status": "Iniciando..."})
+        self.presenter.show_panel("Data Preparation", {"Status": "Starting..."})
         use_case = self.container.get_prepare_data_use_case()
 
         stats = use_case.execute(
@@ -89,14 +91,14 @@ class CLI:
             val_ratio=args.val_ratio if hasattr(args, "val_ratio") else 0.1,
         )
 
-        self.presenter.show_panel("Dados Preparados", stats, style="green")
+        self.presenter.show_panel("Data Prepared", stats, style="green")
 
     def _run_train(self):
         """Execute the model training use case."""
         self.presenter.show_panel(
-            "Treinamento",
+            "Training",
             {
-                "Modelo": self.container.config.model.name,
+                "Model": self.container.config.model.name,
                 "Backend": self.container.config.backend.type.upper(),
             },
         )
@@ -104,7 +106,7 @@ class CLI:
 
         result = use_case.execute(self.container.config)
 
-        self.presenter.show_panel("Treinamento Concluído", result, style="green")
+        self.presenter.show_panel("Training Finished", result, style="green")
 
 
 def main():

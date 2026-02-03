@@ -1,3 +1,10 @@
+"""
+Interface for Model Trainers.
+
+This module defines the ITrainer interface, which abstracts the underlying
+training framework (such as MLX or Unsloth) from the application logic.
+"""
+
 from abc import ABC, abstractmethod
 from typing import Any, Dict
 
@@ -5,37 +12,37 @@ from ..entities.configuration import ProjectConfig
 
 
 class ITrainer(ABC):
-    """Interface abstrata para adaptadores de treinamento (MLX, Unsloth)."""
+    """Abstract interface for training adapters (MLX, Unsloth)."""
 
     @abstractmethod
     def train(self, config: ProjectConfig) -> Dict[str, Any]:
         """
-        Executa o treinamento do modelo.
+        Executes model training.
 
         Args:
-            config: Configuração completa do projeto.
+            config: Complete project configuration.
 
         Returns:
-            Dicionário com métricas e resultados do treino.
+            Dictionary with metrics and training results.
         """
         pass
 
     @abstractmethod
     def fuse_adapters(self, config: ProjectConfig) -> str:
         """
-        Funde os adaptadores LoRA com o modelo base.
+        Fuses LoRA adapters with the base model.
 
         Returns:
-            Caminho do modelo fundido.
+            Path to the fused model.
         """
         pass
 
     @abstractmethod
     def export_to_gguf(self, config: ProjectConfig) -> str:
         """
-        Exporta o modelo para formato GGUF.
+        Exports the model to GGUF format.
 
         Returns:
-            Caminho do arquivo GGUF.
+            Path to the GGUF file.
         """
         pass

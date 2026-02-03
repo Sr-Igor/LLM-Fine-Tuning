@@ -3,16 +3,16 @@ from ..domain.interfaces.publisher import IModelPublisher
 
 
 class PublishModelUseCase:
-    """Caso de uso para publicar o modelo treinado."""
+    """Use case to publish the trained model."""
 
     def __init__(self, publisher: IModelPublisher):
         self.publisher = publisher
 
     def execute(self, config: ProjectConfig) -> None:
         """
-        Executa a publicação do modelo.
+        Executes the model publication.
 
         Args:
-            config: Configuração do projeto.
+            config: Project configuration.
         """
         self.publisher.publish(config)

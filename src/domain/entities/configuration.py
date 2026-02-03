@@ -4,25 +4,25 @@ from typing import List, Optional
 
 @dataclass
 class BackendConfig:
-    """Configuração do Backend de Treinamento."""
+    """Training Backend Configuration."""
 
     type: str = "mlx"  # mlx or unsloth
 
 
 @dataclass
 class ModelConfig:
-    """Configuração do Modelo Base."""
+    """Base Model Configuration."""
 
     name: str
     max_seq_length: int = 2048
     load_in_4bit: bool = True
     dtype: Optional[str] = None
-    hf_repo_id: Optional[str] = None  # Repo para upload (ex: user/repo)
+    hf_repo_id: Optional[str] = None  # Repo for upload (e.g., user/repo)
 
 
 @dataclass
 class LoRAConfig:
-    """Configuração de Adaptação Low-Rank (LoRA)."""
+    """Low-Rank Adaptation (LoRA) Configuration."""
 
     r: int = 16
     alpha: int = 16
@@ -39,12 +39,12 @@ class LoRAConfig:
         ]
     )
     random_state: int = 3407
-    quantization_method: str = "q4_k_m"  # Para exportação GGUF
+    quantization_method: str = "q4_k_m"  # For GGUF export
 
 
 @dataclass
 class TrainingConfig:
-    """Configuração de Treinamento."""
+    """Training Configuration."""
 
     batch_size: int = 2
     grad_accumulation: int = 4
@@ -54,7 +54,7 @@ class TrainingConfig:
     seed: int = 3407
     optim: str = "adamw_8bit"
 
-    # MLX specifics (poderia ser subclass, mas manterei simples aqui)
+    # MLX specifics (could be a subclass, but keeping it simple here)
     mlx_use_metal: bool = True
     mlx_grad_checkpoint: bool = True
 
@@ -71,7 +71,7 @@ class TrainingConfig:
 
 @dataclass
 class DataConfig:
-    """Configuração de Dados e Caminhos."""
+    """Data and Paths Configuration."""
 
     data_dir: str = "data"
     raw_dir: str = "data/raw"
@@ -80,7 +80,7 @@ class DataConfig:
     train_file: str = "train.jsonl"
     val_file: str = "valid.jsonl"
 
-    # Caminhos de saída
+    # Output paths
     output_dir: str = "outputs"
     adapter_path: str = "adapters"
     fused_model_path: str = "models/fused"
@@ -89,7 +89,7 @@ class DataConfig:
 
 @dataclass
 class ProjectConfig:
-    """Configuração Agregada do Projeto."""
+    """Aggregated Project Configuration."""
 
     model: ModelConfig
     lora: LoRAConfig

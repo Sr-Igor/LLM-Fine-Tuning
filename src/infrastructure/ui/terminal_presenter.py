@@ -11,14 +11,14 @@ from .resource_monitor import ResourceMonitor
 
 
 class TerminalPresenter:
-    """Gerencia saída visual no terminal usando Rich."""
+    """Manages visual output in the terminal using Rich."""
 
     def __init__(self):
         """Initialize the TerminalPresenter with a Rich Console."""
         self.console = Console()
 
     def log(self, message: str, level: str = "info"):
-        """Loga mensagem estilizada."""
+        """Logs a stylized message."""
         styles = {
             "info": "blue",
             "success": "green",
@@ -31,7 +31,7 @@ class TerminalPresenter:
         self.console.print(f"[{style}]{prefix}{message}[/{style}]")
 
     def show_panel(self, title: str, content: dict, style: str = "blue"):
-        """Exibe um painel informativo."""
+        """Displays an informative panel."""
         text = ""
         for k, v in content.items():
             text += f"[bold]{k}:[/bold] {v}\n"
@@ -39,7 +39,7 @@ class TerminalPresenter:
         self.console.print(Panel(text.strip(), title=title, border_style=style))
 
     def run_command_with_spinner(self, cmd: List[str], message: str):
-        """Executa comando subprocess com spinner e monitoramento."""
+        """Executes subprocess command with spinner and monitoring."""
         with Progress(
             SpinnerColumn(),
             TextColumn("[bold blue]{task.description}"),
@@ -74,13 +74,13 @@ class TerminalPresenter:
                     raise subprocess.CalledProcessError(process.returncode, cmd, stderr)
 
             except Exception as e:
-                self.log(f"Falha na execução: {str(e)}", "error")
+                self.log(f"Execution failed: {str(e)}", "error")
                 raise
 
     def _update_resource_monitor(
         self, progress: Progress, task, message: str, last_mem_update: float
     ) -> float:
-        """Atualiza o monitor de recursos se necessário."""
+        """Updates the resource monitor if necessary."""
         current_time = time.time()
         if current_time - last_mem_update > 2.0:
             res_status = ResourceMonitor.get_resource_status()
@@ -89,7 +89,7 @@ class TerminalPresenter:
         return last_mem_update
 
     def _process_stdout(self, process: subprocess.Popen):
-        """Lê e exibe a saída do processo."""
+        """Reads and displays process output."""
         reads = [process.stdout.fileno()]
         ret = select.select(reads, [], [], 0.1)
 

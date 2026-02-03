@@ -18,7 +18,7 @@ from ...infrastructure.ui.terminal_presenter import TerminalPresenter
 
 
 class Container:
-    """Dependency Injection Container Simples."""
+    """Simple Dependency Injection Container."""
 
     def __init__(self):
         """Initialize the Container with default values for dependencies."""

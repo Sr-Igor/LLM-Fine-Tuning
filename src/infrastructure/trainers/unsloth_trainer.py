@@ -1,3 +1,10 @@
+"""
+Unsloth Trainer Implementation.
+
+This module implements the ITrainer interface using the Unsloth library,
+optimized for training on NVIDIA GPUs (CUDA).
+"""
+
 from typing import Any, Dict
 
 from ...domain.entities.configuration import ProjectConfig
@@ -17,7 +24,7 @@ except ImportError:
 
 
 class UnslothTrainerAdapter(ITrainer):
-    """Adaptador para treinamento usando Unsloth (CUDA)."""
+    """Adapter for training using Unsloth (CUDA)."""
 
     ERR_UNSLOTH_NOT_INSTALLED = "Unsloth is not installed."
 

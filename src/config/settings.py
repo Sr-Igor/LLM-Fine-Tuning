@@ -13,13 +13,13 @@ from ..domain.entities.configuration import (
     TrainingConfig,
 )
 
-# Carrega .env
-# Carrega .env.global (reaproveitar variáveis comuns)
+# Load .env
+# Load .env.global (reuse common variables)
 load_dotenv(".env.global")
 
-# Carrega ambiente específico baseado no backend
-# O backend pode ser setado via environment variable no Makefile
-# Padrão: mlx (se não especificado)
+# Load specific environment based on backend
+# Backend can be set via environment variable in Makefile
+# Default: mlx (if not specified)
 _backend = os.getenv("TRAINING_BACKEND", "mlx").lower()
 
 if _backend == "unsloth":
@@ -34,7 +34,7 @@ else:
 
 
 class Settings:
-    """Carregador de configurações do ambiente."""
+    """Environment configuration loader."""
 
     @staticmethod
     def load() -> ProjectConfig:
@@ -82,7 +82,7 @@ class Settings:
         return ModelConfig(
             name=model_name,
             max_seq_length=int(os.getenv("APPLE_MAX_SEQ_LENGTH", "2048")),
-            load_in_4bit=True,  # Forçado para MLX 4bit quant models geralmente
+            load_in_4bit=True,  # Forced for MLX 4bit quant models generally
             hf_repo_id=os.getenv("HF_REPO_ID"),
         )
 

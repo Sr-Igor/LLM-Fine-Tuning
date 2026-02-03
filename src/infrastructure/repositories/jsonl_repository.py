@@ -8,13 +8,13 @@ from ...domain.interfaces.data_repository import IDataRepository
 
 
 class JSONLDataRepository(IDataRepository):
-    """Implementação de repositório para arquivos JSONL."""
+    """Repository implementation for JSONL files."""
 
     def load_jsonl(self, file_path: str) -> List[Dict[str, Any]]:
         """Load data from a JSONL file."""
         path = Path(file_path)
         if not path.exists():
-            raise FileNotFoundError(f"Arquivo não encontrado: {file_path}")
+            raise FileNotFoundError(f"File not found: {file_path}")
 
         data = []
         with open(path, "r", encoding="utf-8") as f:
