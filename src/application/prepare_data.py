@@ -30,19 +30,30 @@ class PrepareDataUseCase:
         5. Saves to processed folder.
         """
         # Define paths
-        input_path = Path(config.processed_dir) / "train_dataset_final.jsonl"
-        # (Ideally this input would come from config or argument,
-        # assuming default for now)
+        # 1. Load Data
+        data = []
+        loaded_files = []
 
-        if not input_path.exists():
-            # Tries raw source if processed does not exist
-            input_path = Path(config.raw_dir) / "train.jsonl"  # Example
+        # Priority 1: Aggregate all .jsonl files in raw_dir
+        raw_files = list(Path(config.raw_dir).glob("*.jsonl"))
+        for f in raw_files:
+            file_data = self.repository.load_jsonl(str(f))
+            if file_data:
+                data.extend(file_data)
+                loaded_files.append(f.name)
 
-        if not input_path.exists():
-            raise FileNotFoundError(f"No data found in {config.processed_dir} or {config.raw_dir}")
+        # Priority 2: Fallback to existing processed file if no raw data found
+        if not data:
+            fallback_path = Path(config.processed_dir) / "train_dataset_final.jsonl"
+            if fallback_path.exists():
+                data = self.repository.load_jsonl(str(fallback_path))
+                loaded_files.append(fallback_path.name)
 
-        # 1. Load
-        data = self.repository.load_jsonl(str(input_path))
+        if not data:
+            raise FileNotFoundError(
+                f"No populated JSONL files found in \n"
+                f"{config.raw_dir} (*.jsonl) or {config.processed_dir}"
+            )
 
         # 2. Validate
         if not self.repository.validate_alpaca_format(data):
