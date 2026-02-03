@@ -1,0 +1,11 @@
+[tool.ruff]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort (organização de imports)
+    "B",   # flake8-bugbear (erros de lógica comuns)
+]
+line-length = 100
+
+[tool.ruff.lint.pylint]
+max-args = 5

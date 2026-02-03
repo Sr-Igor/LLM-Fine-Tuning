@@ -1,43 +1,71 @@
-# Makefile - Comandos do Projeto LLM
+# Makefile para src2 (Planuze LLM Refactored)
 
-# Variáveis
-PYTHON = venv/bin/python
-PIP = venv/bin/pip
+PYTHON := python3
+PIP := $(PYTHON) -m pip
+VENV := .venv
+PYTHON_VENV := $(VENV)/bin/python
 
-.PHONY: help install data train run clean
+# Variáveis de Ambiente
+export PYTHONPATH=.
+export MALLOC_NANOSLEEP=0
 
-# O comando padrão quando você roda apenas 'make'
+# Cores
+GREEN := \033[0;32m
+YELLOW := \033[0;33m
+NC := \033[0m
+
+# ============================================================================
+# COMANDOS PRINCIPAIS
+# ============================================================================
+
+.PHONY: help mlx\:install cuda\:install mlx\:prepare mlx\:train cuda\:train mlx\:full cuda\:full
+
 help:
-	@echo "🤖 COMANDOS DO LLM:"
-	@echo "  make install  - Instala as dependências (Mac + Nvidia)"
-	@echo "  make data     - Gera e processa os dados (Sintético + Manual)"
-	@echo "  make train    - Inicia o treinamento (Requer GPU)"
-	@echo "  make run      - Roda o modelo no Ollama"
-	@echo "  make clean    - Limpa caches e arquivos temporários"
+	@echo "$(GREEN)LLM Project $(NC)"
+	@echo "Comandos disponíveis:"
+	@echo ""
+	@echo "MLX Commands:"
+	@echo "  make mlx:install     - Instala dependências"
+	@echo "  make mlx:prepare     - Prepara dados"
+	@echo "  make mlx:train       - Executa treinamento"
+	@echo "  make mlx:full        - Pipeline completo"
+	@echo ""
+	@echo "CUDA Commands:"
+	@echo "  make cuda:install    - Instala dependências"
+	@echo "  make cuda:train      - Executa treinamento"
+	@echo "  make cuda:full       - Pipeline completo"
 
-install:
-	$(PIP) install -r requirements.txt
 
-# Roda o pipeline de dados completo (Gerar -> Merge)
-data:
-	PYTHONPATH=. $(PYTHON) src/core/synthetic_data_gen.py
-# 	$(PYTHON) src/core/dataset_merger.py
+mlx\:install:
+	@echo "$(YELLOW)Instalando dependências (Padrão/Apple)...$(NC)"
+	$(PIP) install -r requirements/global.txt
+	$(PIP) install -r requirements/apple.txt
 
-merge:
-	$(PYTHON) src/core/dataset_merger.py
+cuda\:install:
+	@echo "$(YELLOW)Instalando dependências (CUDA)...$(NC)"
+	$(PIP) install -r requirements/global.txt
+	$(PIP) install -r requirements/cuda.txt
 
-# Roda o treino (No Mac isso vai falhar se não tiver configurado o Google Colab/Remote, mas fica o script)
-train:
-	$(PYTHON) main.py
+mlx\:prepare:
+	@echo "$(YELLOW)Preparando dados...$(NC)"
+	$(PYTHON_VENV) -m src.adapters.cli.main prepare
 
-# Atalho para registrar e rodar no Ollama (Utilize apenas localmente, altere para o nome do seu modelo)
-run:
-	ollama create llm-pro -f Modelfile
-	ollama run llm-pro
+mlx\:train:
+	@echo "$(YELLOW)Iniciando treinamento MLX...$(NC)"
+	TRAINING_BACKEND=mlx $(PYTHON_VENV) -m src.adapters.cli.main train
 
-clean:
-	rm -rf __pycache__
-	rm -rf data/processed/*
-	find . -type f -name "*.pyc" -delete
-test:
-	pytest
+cuda\:train:
+	@echo "$(YELLOW)Iniciando treinamento CUDA (Unsloth)...$(NC)"
+	TRAINING_BACKEND=unsloth $(PYTHON_VENV) -m src.adapters.cli.main train
+
+mlx\:full:
+	@echo "$(YELLOW)Executando pipeline completo (MLX)...$(NC)"
+	TRAINING_BACKEND=mlx $(PYTHON_VENV) -m src.adapters.cli.main full
+
+cuda\:full:
+	@echo "$(YELLOW)Executando pipeline completo (CUDA)...$(NC)"
+	TRAINING_BACKEND=unsloth $(PYTHON_VENV) -m src.adapters.cli.main full
+
+lint:
+	@echo "$(YELLOW)Verificando código...$(NC)"
+	flake8 src/

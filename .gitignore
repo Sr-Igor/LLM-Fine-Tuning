@@ -5,10 +5,13 @@ __pycache__/
 *.py[cod]
 *$py.class
 venv/
+venv_mlx/
 .venv/
 env/
 .env
+.env.cuda
 .env.local
+.env.apple
 
 # ==========================================
 # Dados e Modelos (PESADO/SENSÍVEL)
