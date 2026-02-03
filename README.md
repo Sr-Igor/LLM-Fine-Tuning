@@ -1,55 +1,55 @@
 # Planuze LLM (v2)
 
-Projeto de Fine-Tuning de LLMs otimizado para Apple Silicon (MLX) e CUDA (Unsloth).
+Fine-Tuning LLM Project optimized for Apple Silicon (MLX) and CUDA (Unsloth).
 
 ```
 src/
-├── domain/           # Regras de Negócio (Configurações, Interfaces)
-├── application/      # Casos de Uso (Preparar Dados, Treinar Modelo)
-├── infrastructure/   # Implementações (MLX Trainer, Unsloth Trainer, etc.)
-├── adapters/         # Entry Points (CLI, Container DI)
-└── config/           # Configurações unificadas
+├── domain/           # Business Rules (Configuration, Interfaces)
+├── application/      # Use Cases (Prepare Data, Train Model)
+├── infrastructure/   # Implementations (MLX Trainer, Unsloth Trainer, etc.)
+├── adapters/         # Entry Points (CLI, DI Container)
+└── config/           # Unified Configurations
 ```
 
-## Requisitos
+## Requirements
 
 - Python 3.9+
-- Dependências listadas em `requirements/`
-- **Apple Silicon**: Requer `macosx` 13.0+ (Metal Performance Shaders)
-- **CUDA**: Requer Linux/Windows com NVIDIA GPU e drivers instalados.
+- Dependencies listed in `requirements/`
+- **Apple Silicon**: Requires `macosx` 13.0+ (Metal Performance Shaders)
+- **CUDA**: Requires Linux/Windows with NVIDIA GPU and installed drivers.
 
-## Como Usar
+## How to Use
 
-Utilize o `Makefile` para gerenciar o ciclo de vida do projeto.
+Use the `Makefile` to manage the project lifecycle.
 
-### 1. Instalação
+### 1. Installation
 
-Padrão (Apple Silicon):
+Default (Apple Silicon):
 
 ```bash
 make mlx:install
 ```
 
-Para suporte CUDA (Unsloth):
+For CUDA support (Unsloth):
 
 ```bash
 make cuda:install
 ```
 
-### 2. Configuração
+### 2. Configuration
 
-Copie o `.env.example` para `.env` e ajuste as variáveis.
-Para Apple Silicon, configure `.env.apple`, se necessário.
+Copy `.env.global.example` to `.env.global` and adjust global variables (HF_TOKEN, etc.).
+For specific backends, create `.env.mlx` (from `envs/.env.mlx.example`) or `.env.cuda` (from `envs/.env.cuda.example`).
 
-### 3. Preparação de Dados
+### 3. Data Preparation
 
-Valida e prepara os datasets para o formato exigido.
+Validates and prepares datasets into the required format.
 
 ```bash
 make mlx:prepare
 ```
 
-### 4. Treinamento
+### 4. Training
 
 **Apple Silicon (MLX):**
 
@@ -63,20 +63,20 @@ make mlx:train
 make cuda:train
 ```
 
-### 5. Pipeline Completo
+### 5. Full Pipeline
 
-Executa preparação seguida de treinamento.
+Runs preparation followed by training.
 
 ```bash
 make mlx:full
-# ou
+# or
 make cuda:full
 ```
 
-## Arquitetura
+## Architecture
 
-O sistema utiliza Injeção de Dependência através de um Container (`src2/adapters/cli/container.py`).
+The system uses Dependency Injection via a Container (`src/adapters/cli/container.py`).
 
-- **Trainer**: Abstraído via `ITrainer`. Implementação atual: `MLXTrainerAdapter`.
-- **UI**: Toda saída visual é gerenciada pelo `TerminalPresenter` (usando Rich).
-- **Dados**: Acesso a arquivos via `JSONLDataRepository`.
+- **Trainer**: Abstracted via `ITrainer`. Current implementations: `MLXTrainerAdapter`, `UnslothTrainerAdapter`.
+- **UI**: All visual output is managed by `TerminalPresenter` (using Rich).
+- **Data**: File access via `JSONLDataRepository`.
