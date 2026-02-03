@@ -9,9 +9,10 @@ venv_mlx/
 .venv/
 env/
 .env
+.env.global
 .env.cuda
-.env.local
 .env.apple
+.env.mlx
 
 # ==========================================
 # Dados e Modelos (PESADO/SENSÍVEL)

@@ -14,8 +14,8 @@ from ..domain.entities.configuration import (
 )
 
 # Carrega .env
-# Carrega .env global (reaproveitar variáveis comuns)
-load_dotenv(".env")
+# Carrega .env.global (reaproveitar variáveis comuns)
+load_dotenv(".env.global")
 
 # Carrega ambiente específico baseado no backend
 # O backend pode ser setado via environment variable no Makefile
@@ -26,8 +26,8 @@ if _backend == "unsloth":
     load_dotenv("envs/.env.cuda")
     print(f"Loaded envs/.env.cuda (Backend: {_backend})")
 elif _backend == "mlx":
-    load_dotenv("envs/.env.apple")
-    print(f"Loaded envs/.env.apple (Backend: {_backend})")
+    load_dotenv("envs/.env.mlx")
+    print(f"Loaded envs/.env.mlx (Backend: {_backend})")
 else:
     # Fallback or other backends
     pass
