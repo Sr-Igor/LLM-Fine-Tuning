@@ -5,6 +5,7 @@ This module implements the ITrainer interface using the MLX framework,
 specifically designed for training on Apple Silicon hardware.
 """
 
+import sys
 from typing import Any, Dict, List
 
 from ...domain.entities.configuration import ProjectConfig
@@ -23,7 +24,7 @@ class MLXTrainerAdapter(ITrainer):
         """Builds CLI command for mlx_lm.lora."""
         c = config
         cmd = [
-            "python",
+            sys.executable,
             "-m",
             "mlx_lm.lora",
             "--model",
@@ -80,7 +81,7 @@ class MLXTrainerAdapter(ITrainer):
         self.presenter.log("Fusing adapters...", "info")
 
         cmd = [
-            "python",
+            sys.executable,
             "-m",
             "mlx_lm.fuse",
             "--model",
