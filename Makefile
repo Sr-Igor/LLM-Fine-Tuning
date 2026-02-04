@@ -18,11 +18,14 @@ NC := \033[0m
 # MAIN COMMANDS
 # ============================================================================
 
-.PHONY: help venv mlx\:install cuda\:install mlx\:prepare mlx\:train cuda\:train mlx\:full cuda\:full mlx\:publish cuda\:publish
+.PHONY: help venv mlx\:install cuda\:install mlx\:prepare mlx\:train cuda\:train mlx\:full cuda\:full mlx\:publish cuda\:publish clean
 
 help:
 	@echo "$(GREEN)LLM Project $(NC)"
 	@echo "Available commands:"
+	@echo ""
+	@echo "Utility:"
+	@echo "  make clean           - Remove heavy artifacts (data/processed, models, adapters)"
 	@echo ""
 	@echo "Setup:"
 	@echo "  make venv            - Create virtual environment"
@@ -87,3 +90,12 @@ cuda\:publish:
 lint:
 	@echo "$(YELLOW)Checking code...$(NC)"
 	flake8 src/
+
+clean:
+	@echo "$(YELLOW)Cleaning artifacts...$(NC)"
+	rm -rf data/processed/*
+	rm -rf adapters_mlx
+	rm -rf adapters_cuda
+	rm -rf models/*
+	rm -rf outputs/*
+	@echo "$(GREEN)Clean complete.$(NC)"
