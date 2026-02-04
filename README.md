@@ -1,4 +1,4 @@
-# Planuze LLM (v2)
+# LLM Fine-Tuning
 
 Fine-Tuning LLM Project optimized for Apple Silicon (MLX) and CUDA (Unsloth).
 

@@ -39,6 +39,14 @@ class Settings:
     @staticmethod
     def load() -> ProjectConfig:
         """Load and return the complete project configuration."""
+        from pathlib import Path
+
+        # Determine strict path to envs/.env.global (2 levels up from settings.py config dir)
+        root_dir = Path(__file__).parent.parent.parent
+        global_env = root_dir / "envs" / ".env.global"
+
+        load_dotenv(global_env, override=True)
+
         return ProjectConfig(
             model=Settings._load_model(),
             lora=Settings._load_lora(),

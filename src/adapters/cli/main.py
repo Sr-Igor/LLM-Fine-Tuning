@@ -74,6 +74,7 @@ class CLI:
             elif parsed_args.command == "full":
                 self._run_prepare(parsed_args)
                 self._run_train()
+                self._run_publish()
             elif parsed_args.command == "publish":
                 self._run_publish()
 
