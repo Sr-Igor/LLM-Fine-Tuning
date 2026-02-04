@@ -1,82 +1,151 @@
-# LLM Fine-Tuning
+# LLM Fine-Tuning Project
 
-Fine-Tuning LLM Project optimized for Apple Silicon (MLX) and CUDA (Unsloth).
+Advanced Fine-Tuning pipeline compatible with both **Apple Silicon (MLX)** and **NVIDIA GPUs (CUDA/Unsloth)**.
+Designed with Clean Architecture and SOLID principles.
 
-```
-src/
-├── domain/           # Business Rules (Configuration, Interfaces)
-├── application/      # Use Cases (Prepare Data, Train Model)
-├── infrastructure/   # Implementations (MLX Trainer, Unsloth Trainer, etc.)
-├── adapters/         # Entry Points (CLI, DI Container)
-└── config/           # Unified Configurations
-```
+---
 
-## Requirements
+## 🚀 Quick Start Guide
 
-- Python 3.9+
-- Dependencies listed in `requirements/`
-- **Apple Silicon**: Requires `macosx` 13.0+ (Metal Performance Shaders)
-- **CUDA**: Requires Linux/Windows with NVIDIA GPU and installed drivers.
+Follow this step-by-step guide to go from zero to a trained model uploaded to Hugging Face.
 
-## How to Use
+### 📋 Prerequisites
 
-Use the `Makefile` to manage the project lifecycle.
+1.  **Python 3.9+** installed.
+2.  **Hardware**:
+    - Mac with Apple Silicon (M1/M2/M3) e.g., MacBook Pro, Mac Studio.
+    - **OR** Linux/Windows PC with NVIDIA GPU (CUDA).
+3.  **Hugging Face Account**: You need a Write Access Token. [Get it here](https://huggingface.co/settings/tokens).
+4.  **WandB Account (Optional)**: For tracking training metrics. [Sign up](https://wandb.ai/).
 
-### 1. Installation
+---
 
-Default (Apple Silicon):
+### 🛠️ 1. Installation
+
+Clone the repository and install dependencies using `make`.
+
+#### For Apple Silicon (Mac M1/M2/M3):
 
 ```bash
 make mlx:install
 ```
 
-For CUDA support (Unsloth):
+#### For CUDA (NVIDIA):
 
 ```bash
 make cuda:install
 ```
 
-### 2. Configuration
+---
 
-Copy `.env.global.example` to `.env.global` and adjust global variables (HF_TOKEN, etc.).
-For specific backends, create `.env.mlx` (from `envs/.env.mlx.example`) or `.env.cuda` (from `envs/.env.cuda.example`).
+### ⚙️ 2. Configuration
 
-### 3. Data Preparation
+Set up your environment variables.
 
-Validates and prepares datasets into the required format.
+1.  **Global config**:
 
-```bash
-make mlx:prepare
-```
+    ```bash
+    cp envs/.env.global.example envs/.env.global
+    ```
 
-### 4. Training
+    Edit `envs/.env.global`:
+    - Set `HF_TOKEN` (Required for uploading models and downloading gated models like Llama 3).
+    - Set `WANDB_API_KEY` (Optional, for logging).
 
-**Apple Silicon (MLX):**
+2.  **Backend config**:
+    - **Mac**: `cp envs/.env.mlx.example envs/.env.mlx`
+    - **NVIDIA**: `cp envs/.env.cuda.example envs/.env.cuda`
+
+    Edit the created file (e.g., `.env.mlx`) to adjust:
+    - `APPLE_MODEL_NAME`: Base model (e.g., `mlx-community/Qwen2.5-14B-Instruct-4bit`).
+    - `APPLE_LORA_RANK`: LoRA rank (default 16).
+    - `APPLE_NUM_ITERS`: Total training steps (e.g., 600).
+
+---
+
+### 📚 3. Data Preparation
+
+#### Option A: Manual Data
+
+1.  Create your training data in **JSONL** format.
+    - Format: `{"text": "Human: Hello\nAI: Hi there!"}` or ChatML format.
+2.  Place your `.jsonl` files in the `data/raw/` folder.
+    - Example: `data/raw/my_dataset_v1.jsonl`
+3.  Run the preparation command:
+    ```bash
+    make mlx:prepare
+    # or
+    make cuda:prepare
+    ```
+    _This command merges all files in `data/raw`, shuffles them, splits into Train/Validation, and saves to `data/processed/`._
+
+#### Option B: Synthetic Data (Coming Soon)
+
+_Functionality to generate synthetic datasets from PDFs via Ollama is currently under development._
+
+---
+
+### 🧠 4. Training
+
+Start the fine-tuning process. This will download the base model and train the adapters.
+
+#### Apple Silicon (MLX):
 
 ```bash
 make mlx:train
 ```
 
-**CUDA (Unsloth):**
+_Note: A generic start may require `wandb login` if enabled._
+
+#### CUDA (Unsloth):
 
 ```bash
 make cuda:train
 ```
 
-### 5. Full Pipeline
+---
 
-Runs preparation followed by training.
+### ☁️ 5. Publish / Upload
+
+After training, you can upload your unified model (or adapters) to Hugging Face.
+
+```bash
+make mlx:publish
+# or
+make cuda:publish
+```
+
+_Make sure `HF_REPO_ID` is set in your `.env.global`._
+
+---
+
+### ⚡ One-Command Pipeline
+
+You can run Preparation -> Training -> Publish in a single command:
 
 ```bash
 make mlx:full
-# or
-make cuda:full
 ```
 
-## Architecture
+---
 
-The system uses Dependency Injection via a Container (`src/adapters/cli/container.py`).
+## 📂 Project Structure
 
-- **Trainer**: Abstracted via `ITrainer`. Current implementations: `MLXTrainerAdapter`, `UnslothTrainerAdapter`.
-- **UI**: All visual output is managed by `TerminalPresenter` (using Rich).
-- **Data**: File access via `JSONLDataRepository`.
+```
+src/
+├── domain/           # Business Logic & Interfaces (Clean Architecture)
+├── application/      # Use Cases (Prepare, Train, Publish)
+├── infrastructure/   # Implementations (MLX, Unsloth, FileSystem)
+├── adapters/         # CLI Entry Point & DI Container
+└── config/           # Configuration Management
+```
+
+## 🐛 Troubleshooting
+
+- **WandB Error**: Ensure you have run `wandb login <key>` locally or set `WANDB_API_KEY` in `.env.global`.
+- **Out of Memory (OOM)**: Reduce `BATCH_SIZE` in your `.env` file.
+- **"Killed" process on Mac**: Usually means RAM exhaustion. Reduce batch size or close other apps.
+
+---
+
+License: MIT
