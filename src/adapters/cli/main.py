@@ -1,7 +1,7 @@
 """
-Main entry point for the Planuze LLM CLI.
+Main entry point for the LLM CLI.
 
-This module provides the Command Line Interface (CLI) for the Planuze LLM
+This module provides the Command Line Interface (CLI) for the LLM
 application, allowing users to execute various commands such as data
 preparation, model training, and running the full pipeline. It handles
 argument parsing and dispatches commands to the appropriate use cases via
@@ -17,7 +17,7 @@ from .container import Container
 
 class CLI:
     """
-    Command Line Interface for the Planuze LLM application.
+    Command Line Interface for the LLM application.
 
     This class handles the initialization of the application container,
     manages command-line argument parsing, and dispatches requests to
@@ -42,7 +42,7 @@ class CLI:
 
     def run(self, args: List[str]):
         """Parse arguments and execute the requested command."""
-        parser = argparse.ArgumentParser(description="Planuze LLM CLI")
+        parser = argparse.ArgumentParser(description="LLM CLI")
         subparsers = parser.add_subparsers(dest="command", help="Command to execute")
 
         # Command: prepare
