@@ -13,3 +13,4 @@ ollama>=0.1.7
 requests>=2.31.0
 ruff>=0.10.0
 urllib3<2
+wandb>=0.16.0

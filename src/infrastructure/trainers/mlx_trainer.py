@@ -21,44 +21,68 @@ class MLXTrainerAdapter(ITrainer):
         self.presenter = presenter
 
     def _build_train_cmd(self, config: ProjectConfig) -> List[str]:
-        """Builds CLI command for mlx_lm.lora."""
+        """Builds CLI command for mlx_lm.lora using a config file."""
+        from pathlib import Path
+
+        import yaml
+
         c = config
+
+        # Ensure adapter directory exists so we can save config there
+        adapter_dir = Path(c.data.adapter_path)
+        adapter_dir.mkdir(parents=True, exist_ok=True)
+
+        yaml_path = adapter_dir / "train_config.yaml"
+
+        # Create a temporary YAML config for MLX
+        # MLX expects a flat yaml or specific structure.
+        # Referencing standard mlx_lm config format:
+        # Adjusted to flat structure commonly accepted by mlx_lm.lora config parser
+        mlx_config = {
+            "model": c.model.name,
+            "train": True,
+            "data": c.data.processed_dir,
+            "seed": c.training.seed,
+            "lora": {
+                "r": c.lora.r,
+                "alpha": c.lora.alpha,
+                "dropout": c.lora.dropout,
+            },
+            "batch_size": c.training.batch_size,
+            "iters": c.training.max_steps,
+            "learning_rate": c.training.learning_rate,
+            "steps_per_eval": c.training.steps_per_eval,
+            "val_batches": c.training.val_batches,
+            "save_every": c.training.save_every_steps,
+            "adapter_path": c.data.adapter_path,
+            "max_seq_length": c.model.max_seq_length,
+            "grad_checkpoint": c.training.mlx_grad_checkpoint,
+        }
+
+        # Remove unsupported keys if any
+        # items_per_eval removed as it might conflict or be auto-calced
+
+        # We can also pass num_layers (layers to fine tune) if supported in yaml
+        # usually key is 'lora_layers' in newer versions, or handled in lora_parameters
+        # checking mlx code, 'num_layers' or 'lora_layers' in argparse maps to config.
+        # Let's write essential ones to yaml and pass overrides via CLI where safe.
+
+        # Save config for reproducibility and usage
+        with open(yaml_path, "w") as f:
+            yaml.dump(mlx_config, f)
+
         cmd = [
             sys.executable,
             "-m",
             "mlx_lm.lora",
-            "--model",
-            c.model.name,
-            "--train",
-            "--data",
-            c.data.processed_dir,  # Assumes data already prepared here
-            "--batch-size",
-            str(c.training.batch_size),
-            # MLX uses num-layers for rank or similar depending on version, adjust conf
-            "--num-layers",
-            str(c.lora.r),
-            "--iters",
-            str(c.training.max_steps),
-            "--learning-rate",
-            str(c.training.learning_rate),
-            "--adapter-path",
-            c.data.adapter_path,
-            "--save-every",
-            str(c.training.save_every_steps),
-            "--steps-per-eval",
-            str(c.training.steps_per_eval),
-            "--val-batches",
-            str(c.training.val_batches),
-            "--seed",
-            str(c.training.seed),
+            "--config",
+            str(yaml_path),
         ]
 
-        if c.training.mlx_grad_checkpoint:
-            cmd.append("--grad-checkpoint")
-
         if c.training.wandb_project:
-            cmd.append("--log-to-wandb")
-            cmd.append("--wandb-project")
+            cmd.append("--report-to")
+            cmd.append("wandb")
+            cmd.append("--project-name")
             cmd.append(c.training.wandb_project)
 
         return cmd
@@ -66,6 +90,23 @@ class MLXTrainerAdapter(ITrainer):
     def train(self, config: ProjectConfig) -> Dict[str, Any]:
         """Executes training."""
         self.presenter.log("Starting MLX training...", "info")
+
+        # Auto-login to WandB if key is available
+        import os
+
+        wandb_key = os.getenv("WANDB_API_KEY")
+        if wandb_key:
+            try:
+                import wandb
+
+                self.presenter.log("Logging in to WandB...", "info")
+                wandb.login(key=wandb_key)
+            except ImportError:
+                self.presenter.log(
+                    "WandB configured but package not found. Run pip install wandb", "warning"
+                )
+            except Exception as e:
+                self.presenter.log(f"WandB login failed: {e}", "warning")
 
         # Disk space monitoring before
         # (Implement check if necessary)
