@@ -1,7 +1,10 @@
-# LLM Fine-Tuning Project
+# LLM Fine-Tuning
 
 Advanced Fine-Tuning pipeline compatible with both **Apple Silicon (MLX)** and **NVIDIA GPUs (CUDA/Unsloth)**.
 Designed with Clean Architecture and SOLID principles.
+
+- Author: Igor Rezende
+- Professional contact: [sr.igor.dev@gmail.com](mailto:sr.igor.dev@gmail.com)
 
 ---
 
