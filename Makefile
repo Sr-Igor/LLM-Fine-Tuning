@@ -16,7 +16,7 @@ NC := \033[0m
 # MAIN COMMANDS
 # ============================================================================
 
-.PHONY: help venv mlx\:install cuda\:install mlx\:prepare mlx\:train cuda\:train mlx\:full cuda\:full mlx\:publish cuda\:publish clean
+.PHONY: help venv mlx\:install cuda\:install mlx\:prepare mlx\:train cuda\:train mlx\:full cuda\:full mlx\:publish cuda\:publish synthetic lint clean
 
 help:
 	@echo "$(GREEN)LLM Project $(NC)"
@@ -27,6 +27,9 @@ help:
 	@echo ""
 	@echo "Setup:"
 	@echo "  make venv            - Create virtual environment"
+	@echo ""
+	@echo "Data Generation:"
+	@echo "  make synthetic       - Generate synthetic training data from PDFs"
 	@echo ""
 	@echo "MLX Commands:"
 	@echo "  make mlx:install     - Install dependencies"
@@ -97,3 +100,8 @@ clean:
 	rm -rf models/*
 	rm -rf outputs/*
 	@echo "$(GREEN)Clean complete.$(NC)"
+
+synthetic: venv
+	@echo "$(YELLOW)Generating synthetic training data...$(NC)"
+	$(PYTHON_VENV) -m src.application.generate_synthetic
+	@echo "$(GREEN)Synthetic data generation complete!$(NC)"

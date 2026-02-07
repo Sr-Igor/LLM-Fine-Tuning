@@ -82,9 +82,23 @@ Set up your environment variables.
     ```
     _This command merges all files in `data/raw`, shuffles them, splits into Train/Validation, and saves to `data/processed/`._
 
-#### Option B: Synthetic Data (Coming Soon)
+#### Option B: Synthetic Data (From PDFs)
 
-_Functionality to generate synthetic datasets from PDFs via Ollama is currently under development._
+Generate high-quality Q&A pairs and Action examples directly from your PDF documents.
+
+**Prerequisites**:
+- [Ollama](https://ollama.com) running (`ollama serve`).
+- Model pulled (`ollama pull qwen2.5:14b`).
+
+1.  **Place PDFs**: Add your source PDFs to `data/source_documents/`.
+2.  **Configure**: Check `envs/.env.global` for generator settings (model, chunk size).
+3.  **Run Generator**:
+    ```bash
+    make synthetic
+    ```
+    This command uses Ollama to create a rich dataset interacting with your documents, producing `data/raw/train_data_synthetic.jsonl`.
+    
+    *See [SYNTHETIC_DATA_README.md](SYNTHETIC_DATA_README.md) for full details.*
 
 ---
 

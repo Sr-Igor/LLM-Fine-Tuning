@@ -44,7 +44,8 @@ class PrepareDataUseCase:
 
         # Priority 2: Fallback to existing processed file if no raw data found
         if not data:
-            fallback_path = Path(config.processed_dir) / "train_dataset_final.jsonl"
+            fallback_path = Path(config.processed_dir) / \
+                "train_dataset_final.jsonl"
             if fallback_path.exists():
                 data = self.repository.load_jsonl(str(fallback_path))
                 loaded_files.append(fallback_path.name)
@@ -54,6 +55,29 @@ class PrepareDataUseCase:
                 f"No populated JSONL files found in \n"
                 f"{config.raw_dir} (*.jsonl) or {config.processed_dir}"
             )
+
+        # 1.5 Deduplicate
+        original_count = len(data)
+        unique_data = []
+        seen = set()
+
+        for item in data:
+            # Create a identifying tuple from content
+            # We use the main fields that define the example
+            key = (
+                item.get('instruction', '').strip(),
+                item.get('input', '').strip(),
+                item.get('output', '').strip()
+            )
+
+            if key not in seen:
+                seen.add(key)
+                unique_data.append(item)
+
+        data = unique_data
+        if original_count > len(data):
+            print(
+                f"  → Removed {original_count - len(data)} duplicate examples.")
 
         # 2. Validate
         if not self.repository.validate_alpaca_format(data):
