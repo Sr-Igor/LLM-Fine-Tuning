@@ -64,5 +64,266 @@
         }
       }
     ]
+  },
+  {
+    "id": "lead_create",
+    "source": "sales_crm",
+    "subject": "Lead",
+    "context": {
+      "company": "{{random_choice:MegaCorp,StartFlow,TechVibe}}",
+      "contact": "{{random_choice:John Doe,Jane Smith,Bob Jones}}",
+      "email": "contact@{{context.company}}.com"
+    },
+    "tool_def": "- crm.lead.create: {\n    \"p\":{},\n    \"q\": {},\n    \"b\":{\n        \"company_name\":\"string\",\n        \"contact_name\":\"string\",\n        \"email\":\"string\"\n    }\n}",
+    "checks": [
+      {
+        "language": "pt",
+        "action_req": "Crie um lead para a empresa {{context.company}}",
+        "expected_message": "Criando lead para **{{context.company}}** com contato **{{context.contact}}**.",
+        "payload": {
+          "p": {},
+          "q": {},
+          "b": { "company_name": "{{context.company}}", "contact_name": "{{context.contact}}", "email": "{{context.email}}" }
+        }
+      },
+      {
+        "language": "en",
+        "action_req": "Create a lead for {{context.company}}",
+        "expected_message": "Creating lead for **{{context.company}}** with contact **{{context.contact}}**.",
+        "payload": {
+          "p": {},
+          "q": {},
+          "b": { "company_name": "{{context.company}}", "contact_name": "{{context.contact}}", "email": "{{context.email}}" }
+        }
+      }
+    ]
+  },
+  {
+    "id": "deal_update",
+    "source": "sales_crm",
+    "subject": "Deal",
+    "context": {
+      "@id": "{{random_id:deal_}}",
+      "stage": "{{random_choice:Negotiation,Proposal,Closed Won}}"
+    },
+    "tool_def": "- crm.deal.update: {\n    \"p\":{\"id\":\"string\"},\n    \"q\": {},\n    \"b\":{\n        \"stage\":\"string\"\n    }\n}",
+    "checks": [
+      {
+        "language": "pt",
+        "action_req": "Mova a oportunidade para {{context.stage}}",
+        "expected_message": "Atualizando estágio da oportunidade para **{{context.stage}}**.",
+        "payload": {
+          "p": { "id": "{{context.@id}}" },
+          "q": {},
+          "b": { "stage": "{{context.stage}}" }
+        }
+      },
+      {
+        "language": "en",
+        "action_req": "Move deal to {{context.stage}}",
+        "expected_message": "Updating deal stage to **{{context.stage}}**.",
+        "payload": {
+          "p": { "id": "{{context.@id}}" },
+          "q": {},
+          "b": { "stage": "{{context.stage}}" }
+        }
+      }
+    ]
+  },
+  {
+    "id": "employee_register",
+    "source": "hr",
+    "subject": "Employee",
+    "context": {
+      "name": "{{random_choice:Alice Johnson,Michael Brown,Sarah Wilson}}",
+      "position": "{{random_choice:Developer,Analyst,Manager}}",
+      "department": "IT"
+    },
+    "tool_def": "- hr.employee.register: {\n    \"p\":{},\n    \"q\": {},\n    \"b\":{\n        \"name\":\"string\",\n        \"position\":\"string\",\n        \"department\":\"string\"\n    }\n}",
+    "checks": [
+      {
+        "language": "pt",
+        "action_req": "Cadastre o funcionário {{context.name}} como {{context.position}}",
+        "expected_message": "Cadastrando funcionário **{{context.name}}** no cargo **{{context.position}}**.",
+        "payload": {
+          "p": {},
+          "q": {},
+          "b": { "name": "{{context.name}}", "position": "{{context.position}}", "department": "{{context.department}}" }
+        }
+      },
+      {
+        "language": "en",
+        "action_req": "Register employee {{context.name}} as {{context.position}}",
+        "expected_message": "Registering employee **{{context.name}}** as **{{context.position}}**.",
+        "payload": {
+          "p": {},
+          "q": {},
+          "b": { "name": "{{context.name}}", "position": "{{context.position}}", "department": "{{context.department}}" }
+        }
+      }
+    ]
+  },
+  {
+    "id": "salary_update",
+    "source": "hr",
+    "subject": "Salary",
+    "context": {
+      "@id": "{{random_id:emp_}}",
+      "amount": "{{random_choice:5000,7000,10000}}",
+      "currency": "USD"
+    },
+    "tool_def": "- hr.salary.update: {\n    \"p\":{\"employee_id\":\"string\"},\n    \"q\": {},\n    \"b\":{\n        \"amount\":\"number\",\n        \"currency\":\"string\"\n    }\n}",
+    "checks": [
+      {
+        "language": "pt",
+        "action_req": "Atualize o salário para {{context.amount}}",
+        "expected_message": "Atualizando salário para **{{context.amount}}**.",
+        "payload": {
+          "p": { "employee_id": "{{context.@id}}" },
+          "q": {},
+          "b": { "amount": "{{context.amount}}", "currency": "{{context.currency}}" }
+        }
+      },
+      {
+        "language": "en",
+        "action_req": "Update salary to {{context.amount}}",
+        "expected_message": "Updating salary to **{{context.amount}}**.",
+        "payload": {
+          "p": { "employee_id": "{{context.@id}}" },
+          "q": {},
+          "b": { "amount": "{{context.amount}}", "currency": "{{context.currency}}" }
+        }
+      }
+    ]
+  },
+  {
+    "id": "invoice_create",
+    "source": "finance",
+    "subject": "Invoice",
+    "context": {
+      "customer": "{{random_choice:Acme Corp,Globex,Soylent Corp}}",
+      "amount": "{{random_choice:150.00,200.50,99.99}}",
+      "due_date": "2024-12-31"
+    },
+    "tool_def": "- finance.invoice.create: {\n    \"p\":{},\n    \"q\": {},\n    \"b\":{\n        \"customer\":\"string\",\n        \"amount\":\"number\",\n        \"due_date\":\"string\"\n    }\n}",
+    "checks": [
+      {
+        "language": "pt",
+        "action_req": "Emita uma fatura de R$ {{context.amount}} para {{context.customer}}",
+        "expected_message": "Emitindo fatura de **{{context.amount}}** para **{{context.customer}}**.",
+        "payload": {
+          "p": {},
+          "q": {},
+          "b": { "customer": "{{context.customer}}", "amount": "{{context.amount}}", "due_date": "{{context.due_date}}" }
+        }
+      },
+      {
+        "language": "en",
+        "action_req": "Issue an invoice of ${{context.amount}} for {{context.customer}}",
+        "expected_message": "Issuing invoice of **{{context.amount}}** for **{{context.customer}}**.",
+        "payload": {
+          "p": {},
+          "q": {},
+          "b": { "customer": "{{context.customer}}", "amount": "{{context.amount}}", "due_date": "{{context.due_date}}" }
+        }
+      }
+    ]
+  },
+  {
+    "id": "payment_approve",
+    "source": "finance",
+    "subject": "Payment",
+    "context": {
+      "@id": "{{random_id:pay_}}"
+    },
+    "tool_def": "- finance.payment.approve: {\n    \"p\":{\"id\":\"string\"},\n    \"q\": {},\n    \"b\":{}\n}",
+    "checks": [
+      {
+        "language": "pt",
+        "action_req": "Aprove o pagamento #{{context.@id}}",
+        "expected_message": "Aprovando pagamento **#{{context.@id}}**.",
+        "payload": {
+          "p": { "id": "{{context.@id}}" },
+          "q": {},
+          "b": {}
+        }
+      },
+      {
+        "language": "en",
+        "action_req": "Approve payment #{{context.@id}}",
+        "expected_message": "Approving payment **#{{context.@id}}**.",
+        "payload": {
+          "p": { "id": "{{context.@id}}" },
+          "q": {},
+          "b": {}
+        }
+      }
+    ]
+  },
+  {
+    "id": "product_create",
+    "source": "inventory",
+    "subject": "Product",
+    "context": {
+      "name": "{{random_choice:Wireless Mouse,Mechanical Keyboard,Monitor 4K}}",
+      "sku": "{{random_id:SKU-}}",
+      "price": "{{random_choice:29.99,89.99,299.99}}"
+    },
+    "tool_def": "- inventory.product.create: {\n    \"p\":{},\n    \"q\": {},\n    \"b\":{\n        \"name\":\"string\",\n        \"sku\":\"string\",\n        \"price\":\"number\"\n    }\n}",
+    "checks": [
+      {
+        "language": "pt",
+        "action_req": "Cadastre o produto {{context.name}}",
+        "expected_message": "Cadastrando produto **{{context.name}}** com SKU **{{context.sku}}**.",
+        "payload": {
+          "p": {},
+          "q": {},
+          "b": { "name": "{{context.name}}", "sku": "{{context.sku}}", "price": "{{context.price}}" }
+        }
+      },
+      {
+        "language": "en",
+        "action_req": "Register product {{context.name}}",
+        "expected_message": "Registering product **{{context.name}}** with SKU **{{context.sku}}**.",
+        "payload": {
+          "p": {},
+          "q": {},
+          "b": { "name": "{{context.name}}", "sku": "{{context.sku}}", "price": "{{context.price}}" }
+        }
+      }
+    ]
+  },
+  {
+    "id": "stock_adjust",
+    "source": "inventory",
+    "subject": "Stock",
+    "context": {
+      "@id": "{{random_id:prod_}}",
+      "quantity": "{{random_choice:50,100,200}}",
+      "reason": "Restock"
+    },
+    "tool_def": "- inventory.stock.adjust: {\n    \"p\":{\"product_id\":\"string\"},\n    \"q\": {},\n    \"b\":{\n        \"quantity\":\"number\",\n        \"reason\":\"string\"\n    }\n}",
+    "checks": [
+      {
+        "language": "pt",
+        "action_req": "Adicione {{context.quantity}} unidades ao estoque",
+        "expected_message": "Ajustando estoque: adicionando **{{context.quantity}}** unidades due to **{{context.reason}}**.",
+        "payload": {
+          "p": { "product_id": "{{context.@id}}" },
+          "q": {},
+          "b": { "quantity": "{{context.quantity}}", "reason": "{{context.reason}}" }
+        }
+      },
+      {
+        "language": "en",
+        "action_req": "Add {{context.quantity}} units to stock",
+        "expected_message": "Adjusting stock: adding **{{context.quantity}}** units due to **{{context.reason}}**.",
+        "payload": {
+          "p": { "product_id": "{{context.@id}}" },
+          "q": {},
+          "b": { "quantity": "{{context.quantity}}", "reason": "{{context.reason}}" }
+        }
+      }
+    ]
   }
 ]
