@@ -28,6 +28,10 @@ PYTHON_EXEC="${PYTHON_EXECUTABLE:-python}"
 # Criar diretório para batches se não existir
 mkdir -p data/raw/batches
 
+# Gerar ID de variação única para esta execução (garante novos dados)
+VARIATION_ID=$(date +%s)
+echo -e "${YELLOW}🆔 Run Variation ID: ${VARIATION_ID}${NC}\n"
+
 # Função para limpar checkpoints
 clean_checkpoints() {
     echo -e "${YELLOW}🧹 Limpando checkpoints...${NC}"
@@ -57,7 +61,11 @@ generate_batch() {
     export SYNTHETIC_OVERLAP=$overlap
     export SYNTHETIC_GENERATOR_MODEL=$model
     export SYNTHETIC_LANGUAGES=$languages
+    export SYNTHETIC_GENERATOR_MODEL=$model
+    export SYNTHETIC_LANGUAGES=$languages
     export SYNTHETIC_OUTPUT_FILE=$output_file
+    # Incluir Variation ID para garantir que o cache seja novo e a amostragem varie
+    export SYNTHETIC_BATCH_ID="batch_${batch_num}_${VARIATION_ID}"
     
     # Executar geração
     $PYTHON_EXEC src/application/generate_synthetic.py

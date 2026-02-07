@@ -60,6 +60,7 @@ class SyntheticDataGenerator:
             os.getenv("SYNTHETIC_TASKS_FILE", "data/config/synthetic_tasks.json")
         )
         self.languages = os.getenv("SYNTHETIC_LANGUAGES", "pt,en").split(",")
+        self.batch_id = os.getenv("SYNTHETIC_BATCH_ID", "default")
         self.tasks_config = self._load_tasks_config()
 
         # Ensure output directory exists
@@ -81,6 +82,7 @@ class SyntheticDataGenerator:
             console.print(f"[red]Error loading tasks config: {e}[/red]")
             return []
 
+    # ... (skipping unchanged methods for brevity in tool call, focusing on target block) ...
     def _hydrate_template(self, data: Any) -> Any:
         """Recursively hydrate templates in dictionary/list/string."""
         if isinstance(data, dict):
@@ -351,8 +353,13 @@ Planus: Olá! Como posso ajudar você hoje?
         console.print(f"  → {len(chunks)} chunks from {pdf_file.name}")
 
         examples = []
+        # Randomly select chunks to process
+        # This ensures variety if we run multiple batches with low sample count
+        num_chunks_to_process = min(len(chunks), 10)
+        selected_chunks = random.sample(chunks, num_chunks_to_process)
+
         # Generate 2-3 examples per chunk (randomly)
-        for chunk in chunks[:10]:  # Limit to first 10 chunks per PDF
+        for chunk in selected_chunks:
             num_examples = random.randint(2, 3)
             for _ in range(num_examples):
                 lang = random.choice(self.languages)
@@ -362,8 +369,10 @@ Planus: Olá! Como posso ajudar você hoje?
         return examples
 
     def _get_pdf_checkpoint_path(self, pdf_file: Path, partial_dir: Path) -> Path:
-        """Generate checkpoint path for a PDF file."""
-        file_hash = hashlib.md5(pdf_file.name.encode()).hexdigest()[:8]
+        """Generate checkpoint path for a PDF file with config hash."""
+        # Include chunk_size, overlap, and batch_id in hash to allow multiple variations
+        config_str = f"{pdf_file.name}-{self.chunk_size}-{self.overlap}-{self.batch_id}"
+        file_hash = hashlib.md5(config_str.encode()).hexdigest()[:8]
         return partial_dir / f"synthetic_{pdf_file.stem}_{file_hash}.jsonl"
 
     def _load_checkpoint(self, checkpoint_file: Path) -> Optional[List[Dict[str, Any]]]:
