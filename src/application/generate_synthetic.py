@@ -167,8 +167,9 @@ class SyntheticDataGenerator:
                     "prompt": prompt,
                     "stream": False,
                     "options": {
-                        "temperature": 0.8,
-                        "top_p": 0.9,
+                        "temperature": 1.0,  # Increased for more diversity
+                        "top_p": 0.95,
+                        "top_k": 50,
                     },
                 },
                 timeout=120,
@@ -181,26 +182,37 @@ class SyntheticDataGenerator:
 
     def generate_ask_example(self, context_chunk: str, language: str = "pt") -> Dict[str, Any]:
         """Generate an ASK mode training example."""
-        generation_prompt = f"""You are creating training data for an AI assistant.
+        # Randomly select question complexity level
+        complexity_types = [
+            "Simple fact extraction (What is X? When does Y happen?)",
+            "Comparison or analysis (What's the difference between X and Y?)",
+            "Multi-step reasoning (If X happens, what should be done about Y?)",
+            "Negative constraint (What is NOT covered? What are the limitations?)",
+            "Procedural (How to do X? What are the steps for Y?)",
+        ]
+        selected_type = random.choice(complexity_types)
 
-Given this context from a document:
+        generation_prompt = f"""You are creating diverse training data for a business AI assistant.
+
+Context from document:
 ---
 {context_chunk}
 ---
 
-Generate a realistic user question that can be answered using ONLY the information in this context.
-Then provide the answer.
+Generate ONE question-answer pair using ONLY the information above.
 
-Requirements:
-- Question must be in {language} language
-- Answer must be concise and based ONLY on the context
-- Use natural, conversational language
-- Vary question types (what, how, when, why, who)
+IMPORTANT DIVERSITY REQUIREMENTS:
+- Question type: {selected_type}
+- Language: {language}
+- Vary sentence structure (don't always start with "What is...")
+- Mix formal and informal business tone
+- Answer length: vary between brief (1 sentence) and detailed (2-3 sentences)
+- If context is insufficient for the question, respond: "I don't have enough information to answer that."
 
-Return ONLY a JSON object with this exact structure:
+Return ONLY valid JSON:
 {{
-  "question": "the user question here",
-  "answer": "the assistant answer here"
+  "question": "your question here",
+  "answer": "your answer here"
 }}
 
 JSON:"""
@@ -358,9 +370,9 @@ Planus: Olá! Como posso ajudar você hoje?
         num_chunks_to_process = min(len(chunks), 10)
         selected_chunks = random.sample(chunks, num_chunks_to_process)
 
-        # Generate 2-3 examples per chunk (randomly)
+        # Generate 1-3 examples per chunk (more variation in quantity)
         for chunk in selected_chunks:
-            num_examples = random.randint(2, 3)
+            num_examples = random.randint(1, 3)  # More variation: 1-3 instead of always 2-3
             for _ in range(num_examples):
                 lang = random.choice(self.languages)
                 example = self.generate_ask_example(chunk, lang)
