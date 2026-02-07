@@ -30,6 +30,7 @@ help:
 	@echo ""
 	@echo "Data Generation:"
 	@echo "  make synthetic       - Generate synthetic training data from PDFs"
+	@echo "  make synthetic:batches - Generate multiple batches of synthetic data"
 	@echo ""
 	@echo "MLX Commands:"
 	@echo "  make mlx:install     - Install dependencies"
@@ -105,3 +106,8 @@ synthetic: venv
 	@echo "$(YELLOW)Generating synthetic training data...$(NC)"
 	$(PYTHON_VENV) -m src.application.generate_synthetic
 	@echo "$(GREEN)Synthetic data generation complete!$(NC)"
+
+synthetic\:batches: venv
+	@echo "$(YELLOW)Generating synthetic training data batches...$(NC)"
+	PYTHON_EXECUTABLE=$(PYTHON_VENV) bash scripts/generate_batches.sh
+	@echo "$(GREEN)Synthetic batches generation complete!$(NC)"

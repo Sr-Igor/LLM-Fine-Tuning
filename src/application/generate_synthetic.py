@@ -36,10 +36,10 @@ class SyntheticDataGenerator:
         self.model = os.getenv("SYNTHETIC_GENERATOR_MODEL", "qwen2.5:14b")
         self.chunk_size = int(os.getenv("SYNTHETIC_CHUNK_SIZE", "3500"))
         self.overlap = int(os.getenv("SYNTHETIC_OVERLAP", "500"))
-        self.source_dir = Path(
-            os.getenv("SYNTHETIC_SOURCE_DIR", "data/source_documents"))
+        self.source_dir = Path(os.getenv("SYNTHETIC_SOURCE_DIR", "data/source_documents"))
         self.output_file = Path(
-            os.getenv("SYNTHETIC_OUTPUT_FILE", "data/raw/train_data_synthetic.jsonl"))
+            os.getenv("SYNTHETIC_OUTPUT_FILE", "data/raw/train_data_synthetic.jsonl")
+        )
 
         # Load prompts from env
         self.prompt_ask = os.getenv("AI_PROMPT_ASK_INSTRUCTIONS", "")
@@ -52,14 +52,13 @@ class SyntheticDataGenerator:
         self.tag_history = os.getenv("AI_CHAT_HISTORY", "history")
         self.tag_language = os.getenv("AI_CHAT_LANGUAGE", "language")
         self.tag_mode = os.getenv("AI_CHAT_MODE", "mode")
-        self.tag_sys_req = os.getenv(
-            "AI_CHAT_SYSTEM_REQUIRED", "system_action_required")
-        self.tag_sys_instr = os.getenv(
-            "AI_CHAT_SYSTEM_INSTRUCTIONS", "system_instructions")
+        self.tag_sys_req = os.getenv("AI_CHAT_SYSTEM_REQUIRED", "system_action_required")
+        self.tag_sys_instr = os.getenv("AI_CHAT_SYSTEM_INSTRUCTIONS", "system_instructions")
 
         # Load external configuration
         self.tasks_file = Path(
-            os.getenv("SYNTHETIC_TASKS_FILE", "data/config/synthetic_tasks.json"))
+            os.getenv("SYNTHETIC_TASKS_FILE", "data/config/synthetic_tasks.json")
+        )
         self.languages = os.getenv("SYNTHETIC_LANGUAGES", "pt,en").split(",")
         self.tasks_config = self._load_tasks_config()
 
@@ -92,8 +91,7 @@ class SyntheticDataGenerator:
             # Handle random_id:prefix
             if "{{random_id:" in data:
                 prefix = data.split("{{random_id:")[1].split("}}")[0]
-                random_chars = "".join(
-                    random.choices("abcdef0123456789", k=10))
+                random_chars = "".join(random.choices("abcdef0123456789", k=10))
                 return data.replace(f"{{{{random_id:{prefix}}}}}", prefix + random_chars)
             # Handle random_choice:a,b,c
             elif "{{random_choice:" in data:
@@ -149,7 +147,7 @@ class SyntheticDataGenerator:
             if end < text_len:
                 last_period = chunk.rfind(". ")
                 if last_period > self.chunk_size * 0.7:  # At least 70% of chunk
-                    chunk = chunk[:last_period + 1]
+                    chunk = chunk[: last_period + 1]
                     end = start + last_period + 1
 
             chunks.append(chunk.strip())
@@ -169,9 +167,9 @@ class SyntheticDataGenerator:
                     "options": {
                         "temperature": 0.8,
                         "top_p": 0.9,
-                    }
+                    },
                 },
-                timeout=120
+                timeout=120,
             )
             response.raise_for_status()
             return response.json().get("response", "").strip()
@@ -246,16 +244,12 @@ JSON:"""
 </{self.tag_history}>
 
 <{self.tag_question}>
-{qa_data['question']}
+{qa_data["question"]}
 </{self.tag_question}>
 
 <{self.tag_language}>{language}</{self.tag_language}>"""
 
-                return {
-                    "instruction": full_prompt,
-                    "input": "",
-                    "output": qa_data['answer']
-                }
+                return {"instruction": full_prompt, "input": "", "output": qa_data["answer"]}
         except Exception as e:
             console.print(f"[yellow]Failed to parse Q&A: {e}[/yellow]")
 
@@ -273,8 +267,7 @@ JSON:"""
         task = self._hydrate_template(task_template)
 
         # 3. Find the check/expectation for the requested language
-        check = next((c for c in task["checks"]
-                     if c["language"] == language), None)
+        check = next((c for c in task["checks"] if c["language"] == language), None)
 
         if not check:
             # Fallback to first available if requested language not found
@@ -284,16 +277,16 @@ JSON:"""
         # 4. Resolve placeholders in expected message and payload
         # This replaces {{context.name}} with the actual name generated in step 2
         check["expected_message"] = self._resolve_placeholders(
-            check["expected_message"], task["context"])
-        check["payload"] = self._resolve_placeholders(
-            check["payload"], task["context"])
+            check["expected_message"], task["context"]
+        )
+        check["payload"] = self._resolve_placeholders(check["payload"], task["context"])
 
         full_prompt = f"""<{self.tag_sys_req}>
 {self.prompt_action}
 
 # AVAILABLE TOOLS
 
-{task['tool_def']}
+{task["tool_def"]}
     
 ⚠️ IMPORTANT: You MUST response with the JSON format above if the user asks for these actions.
 
@@ -301,16 +294,16 @@ JSON:"""
 
 <{self.tag_mode}>ACTION</{self.tag_mode}>
 
-<{self.tag_subject}>{task['subject']}</{self.tag_subject}>
+<{self.tag_subject}>{task["subject"]}</{self.tag_subject}>
 
 <{self.tag_context}>
 {{
   "userName": "User",
   "content": [
     {{
-      "source": "{task['source']}",
+      "source": "{task["source"]}",
       "data": [
-        {json.dumps(json.dumps(task['context']))}
+        {json.dumps(json.dumps(task["context"]))}
       ]
     }}
   ],
@@ -326,7 +319,7 @@ Planus: Olá! Como posso ajudar você hoje?
 </{self.tag_history}>
 
 <{self.tag_question}>
-{check['action_req']}
+{check["action_req"]}
 </{self.tag_question}>
 
 <{self.tag_language}>{language}</{self.tag_language}>"""
@@ -334,15 +327,18 @@ Planus: Olá! Como posso ajudar você hoje?
         return {
             "instruction": full_prompt,
             "input": "",
-            "output": json.dumps({
-                "action_id": None,
-                # "source" in config maps to "subject" in JSON response usually
-                "subject": task["source"],
-                # Simple heuristic or add to config
-                "action": task["id"].split("_")[-1] if "_" in task["id"] else "update",
-                "message": check["expected_message"],
-                "payload": check["payload"]
-            }, ensure_ascii=False)
+            "output": json.dumps(
+                {
+                    "action_id": None,
+                    # "source" in config maps to "subject" in JSON response usually
+                    "subject": task["source"],
+                    # Simple heuristic or add to config
+                    "action": task["id"].split("_")[-1] if "_" in task["id"] else "update",
+                    "message": check["expected_message"],
+                    "payload": check["payload"],
+                },
+                ensure_ascii=False,
+            ),
         }
 
     def _process_pdf_file(self, pdf_file: Path) -> List[Dict[str, Any]]:
@@ -387,11 +383,7 @@ Planus: Olá! Como posso ajudar você hoje?
                 f.write(json.dumps(ex, ensure_ascii=False) + "\n")
 
     def _process_pdf_with_checkpoint(
-        self,
-        pdf_file: Path,
-        partial_dir: Path,
-        progress: Progress,
-        task_id: Any
+        self, pdf_file: Path, partial_dir: Path, progress: Progress, task_id: Any
     ) -> List[Dict[str, Any]]:
         """Process a single PDF with checkpointing logic."""
         checkpoint_file = self._get_pdf_checkpoint_path(pdf_file, partial_dir)
@@ -399,12 +391,10 @@ Planus: Olá! Como posso ajudar você hoje?
         # Try loading existing
         existing = self._load_checkpoint(checkpoint_file)
         if existing is not None:
-            progress.console.print(
-                f"[dim]  Skipping {pdf_file.name} (already processed)[/dim]")
+            progress.console.print(f"[dim]  Skipping {pdf_file.name} (already processed)[/dim]")
             return existing
 
-        progress.update(
-            task_id, description=f"[cyan]Reading {pdf_file.name}...")
+        progress.update(task_id, description=f"[cyan]Reading {pdf_file.name}...")
 
         # Generate
         examples = self._process_pdf_file(pdf_file)
@@ -418,10 +408,7 @@ Planus: Olá! Como posso ajudar você hoje?
         return examples or []
 
     def _generate_actions_with_checkpoint(
-        self,
-        partial_dir: Path,
-        num_action_examples: int,
-        progress: Progress
+        self, partial_dir: Path, num_action_examples: int, progress: Progress
     ) -> List[Dict[str, Any]]:
         """Generate action examples with checkpointing."""
         action_file = partial_dir / "synthetic_actions.jsonl"
@@ -429,13 +416,11 @@ Planus: Olá! Como posso ajudar você hoje?
         # Check if actions are already generated
         existing = self._load_checkpoint(action_file)
         if existing is not None:
-            progress.console.print(
-                "[dim]  Skipping Actions (already processed)[/dim]")
+            progress.console.print("[dim]  Skipping Actions (already processed)[/dim]")
             return existing
 
         task = progress.add_task(
-            f"[cyan]Generating {num_action_examples} ACTION examples...",
-            total=num_action_examples
+            f"[cyan]Generating {num_action_examples} ACTION examples...", total=num_action_examples
         )
 
         action_examples = []
@@ -460,7 +445,7 @@ Planus: Olá! Como posso ajudar você hoje?
         final_dataset = []
 
         # Directory for partial saves (checkpoints)
-        partial_dir = self.output_file.parent / "synthetic_parts"
+        partial_dir = self.output_file.parent
         partial_dir.mkdir(parents=True, exist_ok=True)
 
         # Get all PDFs
@@ -473,19 +458,13 @@ Planus: Olá! Como posso ajudar você hoje?
         console.print(f"[green]Found {len(pdf_files)} PDF files[/green]")
 
         with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            console=console
+            SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console
         ) as progress:
-
             # 1. Process PDFs for ASK examples
-            task = progress.add_task(
-                "[cyan]Processing PDFs...", total=len(pdf_files))
+            task = progress.add_task("[cyan]Processing PDFs...", total=len(pdf_files))
 
             for pdf_file in pdf_files:
-                examples = self._process_pdf_with_checkpoint(
-                    pdf_file, partial_dir, progress, task
-                )
+                examples = self._process_pdf_with_checkpoint(pdf_file, partial_dir, progress, task)
                 final_dataset.extend(examples)
                 progress.advance(task)
 
@@ -503,13 +482,11 @@ Planus: Olá! Como posso ajudar você hoje?
             for example in dataset:
                 f.write(json.dumps(example, ensure_ascii=False) + "\n")
 
-        console.print(
-            f"\n[green]✅ Saved {len(dataset)} examples to {self.output_file}[/green]")
+        console.print(f"\n[green]✅ Saved {len(dataset)} examples to {self.output_file}[/green]")
 
     def run(self, num_action_examples: int = 50):
         """Run the complete generation pipeline."""
-        console.print(
-            "[bold cyan]🚀 Planuze Synthetic Data Generator[/bold cyan]\n")
+        console.print("[bold cyan]🚀 Planuze Synthetic Data Generator[/bold cyan]\n")
         console.print(f"📁 Source: {self.source_dir}")
         console.print(f"💾 Output: {self.output_file}")
         console.print(f"🤖 Model: {self.model}")
