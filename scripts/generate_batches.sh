@@ -138,12 +138,12 @@ echo -e "${BLUE}🔀 Mesclando batches...${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
 
 # Mesclar todos os batches
-cat data/raw/batches/batch_*.jsonl > data/raw/train_data_synthetic.jsonl
+# cat data/raw/batches/batch_*.jsonl > data/raw/train_data_synthetic.jsonl
 
 # Contar total
-total_examples=$(wc -l < data/raw/train_data_synthetic.jsonl | tr -d ' ')
+# total_examples=$(wc -l < data/raw/train_data_synthetic.jsonl | tr -d ' ')
 
-echo -e "${GREEN}✅ Mesclagem completa!${NC}\n"
+echo -e "${GREEN}✅ Geração dos batches completa! (Mesclagem desativada)${NC}\n"
 
 # ==========================================
 # ESTATÍSTICAS FINAIS

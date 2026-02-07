@@ -506,7 +506,11 @@ Planus: Olá! Como posso ajudar você hoje?
         if dataset:
             # Shuffle for better training
             random.shuffle(dataset)
-            self.save_dataset(dataset)
+            # self.save_dataset(dataset)
+            console.print(
+                "\n[yellow]⚠️ Final file generation disabled to prevent overwriting.[/yellow]"
+            )
+            console.print(f"[yellow]   Checkpoints saved in {self.output_file.parent}/[/yellow]")
         else:
             console.print("[red]No examples generated![/red]")
 
