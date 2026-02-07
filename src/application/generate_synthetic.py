@@ -13,7 +13,7 @@ import json
 import os
 import random
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import requests
 from dotenv import load_dotenv
@@ -57,8 +57,71 @@ class SyntheticDataGenerator:
         self.tag_sys_instr = os.getenv(
             "AI_CHAT_SYSTEM_INSTRUCTIONS", "system_instructions")
 
+        # Load external configuration
+        self.tasks_file = Path(
+            os.getenv("SYNTHETIC_TASKS_FILE", "data/config/synthetic_tasks.json"))
+        self.languages = os.getenv("SYNTHETIC_LANGUAGES", "pt,en").split(",")
+        self.tasks_config = self._load_tasks_config()
+
         # Ensure output directory exists
         self.output_file.parent.mkdir(parents=True, exist_ok=True)
+
+    def _load_tasks_config(self) -> List[Dict[str, Any]]:
+        """Load synthetic tasks configuration from JSON file."""
+        if not self.tasks_file.exists():
+            console.print(
+                f"[yellow]Warning: Tasks file {self.tasks_file} not found. "
+                "Using empty list.[/yellow]"
+            )
+            return []
+
+        try:
+            with open(self.tasks_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            console.print(f"[red]Error loading tasks config: {e}[/red]")
+            return []
+
+    def _hydrate_template(self, data: Any) -> Any:
+        """Recursively hydrate templates in dictionary/list/string."""
+        if isinstance(data, dict):
+            return {k: self._hydrate_template(v) for k, v in data.items()}
+        elif isinstance(data, list):
+            return [self._hydrate_template(i) for i in data]
+        elif isinstance(data, str):
+            # Handle random_id:prefix
+            if "{{random_id:" in data:
+                prefix = data.split("{{random_id:")[1].split("}}")[0]
+                random_chars = "".join(
+                    random.choices("abcdef0123456789", k=10))
+                return data.replace(f"{{{{random_id:{prefix}}}}}", prefix + random_chars)
+            # Handle random_choice:a,b,c
+            elif "{{random_choice:" in data:
+                choices_str = data.split("{{random_choice:")[1].split("}}")[0]
+                choices = choices_str.split(",")
+                template = f"{{{{random_choice:{','.join(choices)}}}}}"
+                return data.replace(template, random.choice(choices).strip())
+            return data
+        return data
+
+    def _resolve_placeholders(self, data: Any, context: Dict[str, Any]) -> Any:
+        """Resolve {{context.field}} placeholders in string, dict, or list."""
+        if isinstance(data, dict):
+            return {k: self._resolve_placeholders(v, context) for k, v in data.items()}
+        elif isinstance(data, list):
+            return [self._resolve_placeholders(i, context) for i in data]
+        if not isinstance(data, str):
+            return data
+
+        result = data
+        # Simple recursion for nested keys could be added, but flat access is enough for now
+        # Supporting {{context.field}} and {{context.@field}}
+        for key, value in context.items():
+            placeholder = f"{{{{context.{key}}}}}"
+            if placeholder in result:
+                result = result.replace(placeholder, str(value))
+
+        return result
 
     def extract_text_from_pdf(self, pdf_path: Path) -> str:
         """Extract text content from a PDF file."""
@@ -199,101 +262,38 @@ JSON:"""
         return None
 
     def generate_action_example(self, language: str = "pt") -> Dict[str, Any]:
-        """Generate an ACTION mode training example with dynamic scenarios."""
+        """Generate an ACTION mode training example from dynamic config."""
+        if not self.tasks_config:
+            return None
 
-        # Scenario 1: Company Update
-        company_ctx = {
-            "@id": "cml_" + "".join(random.choices("abcdef0123456789", k=10)),
-            "name": random.choice(["Planuze", "DevCorp"]),
-            "email": "contact@planuze.com"
-        }
+        # 1. Select a random task
+        task_template = random.choice(self.tasks_config)
 
-        scenarios = [
-            {
-                "id": "company_update",
-                "source": "company",
-                "subject": "Company",
-                "context": company_ctx,
-                "tool_def": """- company.update: {
-    "p":{"id":"string"},
-    "q": {"action":"string"},
-    "b":{
-        "name":"string (optional)",
-        "email":"email (optional)"
-    }
-}""",
-                "action_req": (
-                    "Altere o nome da empresa para NovoNome"
-                    if language == "pt"
-                    else "Change company name to NewName"
-                ),
-                "expected": {
-                    "action_id": None,
-                    "subject": "company",
-                    "action": "update",
-                    "message": (
-                        f"Vou alterar o nome de **{company_ctx['name']}** para **NovoNome**."
-                        if language == "pt"
-                        else f"Changing name from **{company_ctx['name']}** to **NewName**."
-                    ),
-                    "payload": {
-                        "p": {"id": company_ctx["@id"]},
-                        "q": {},
-                        "b": {"name": "NovoNome" if language == "pt" else "NewName"}
-                    }
-                }
-            },
-            {
-                "id": "user_update",
-                "source": "user_profile",
-                "subject": "User",
-                "context": {
-                    "@id": "usr_" + "".join(random.choices("abcdef0123456789", k=10)),
-                    "role": "Analista",
-                    "department": "Finance"
-                },
-                "tool_def": """- user.update: {
-    "p":{"id":"string"},
-    "q": {},
-    "b":{
-        "role":"string (optional)",
-        "department":"string (optional)"
-    }
-}""",
-                "action_req": (
-                    "Mude meu cargo para Gerente"
-                    if language == "pt"
-                    else "Change my role to Manager"
-                ),
-                "expected": {
-                    "action_id": None,
-                    "subject": "user",
-                    "action": "update",
-                    "message": (
-                        "Alterando cargo de **Analista** para **Gerente**."
-                        if language == "pt"
-                        else "Changing role from **Analista** to **Manager**."
-                    ),
-                    "payload": {
-                        "p": {"id": "usr_..."},  # Will be fixed below
-                        "q": {},
-                        "b": {"role": "Gerente" if language == "pt" else "Manager"}
-                    }
-                }
-            }
-        ]
+        # 2. Hydrate the task (generate random IDs, choices, etc)
+        task = self._hydrate_template(task_template)
 
-        # Fix ID reference in second scenario
-        scenarios[1]["expected"]["payload"]["p"]["id"] = scenarios[1]["context"]["@id"]
+        # 3. Find the check/expectation for the requested language
+        check = next((c for c in task["checks"]
+                     if c["language"] == language), None)
 
-        scenario = random.choice(scenarios)
+        if not check:
+            # Fallback to first available if requested language not found
+            check = task["checks"][0]
+            language = check["language"]
+
+        # 4. Resolve placeholders in expected message and payload
+        # This replaces {{context.name}} with the actual name generated in step 2
+        check["expected_message"] = self._resolve_placeholders(
+            check["expected_message"], task["context"])
+        check["payload"] = self._resolve_placeholders(
+            check["payload"], task["context"])
 
         full_prompt = f"""<{self.tag_sys_req}>
 {self.prompt_action}
 
 # AVAILABLE TOOLS
 
-{scenario['tool_def']}
+{task['tool_def']}
     
 ⚠️ IMPORTANT: You MUST response with the JSON format above if the user asks for these actions.
 
@@ -301,16 +301,16 @@ JSON:"""
 
 <{self.tag_mode}>ACTION</{self.tag_mode}>
 
-<{self.tag_subject}>{scenario['subject']}</{self.tag_subject}>
+<{self.tag_subject}>{task['subject']}</{self.tag_subject}>
 
 <{self.tag_context}>
 {{
   "userName": "User",
   "content": [
     {{
-      "source": "{scenario['source']}",
+      "source": "{task['source']}",
       "data": [
-        {json.dumps(json.dumps(scenario['context']))}
+        {json.dumps(json.dumps(task['context']))}
       ]
     }}
   ],
@@ -326,7 +326,7 @@ Planus: Olá! Como posso ajudar você hoje?
 </{self.tag_history}>
 
 <{self.tag_question}>
-{scenario['action_req']}
+{check['action_req']}
 </{self.tag_question}>
 
 <{self.tag_language}>{language}</{self.tag_language}>"""
@@ -334,7 +334,15 @@ Planus: Olá! Como posso ajudar você hoje?
         return {
             "instruction": full_prompt,
             "input": "",
-            "output": json.dumps(scenario['expected'], ensure_ascii=False)
+            "output": json.dumps({
+                "action_id": None,
+                # "source" in config maps to "subject" in JSON response usually
+                "subject": task["source"],
+                # Simple heuristic or add to config
+                "action": task["id"].split("_")[-1] if "_" in task["id"] else "update",
+                "message": check["expected_message"],
+                "payload": check["payload"]
+            }, ensure_ascii=False)
         }
 
     def _process_pdf_file(self, pdf_file: Path) -> List[Dict[str, Any]]:
@@ -351,7 +359,7 @@ Planus: Olá! Como posso ajudar você hoje?
         for chunk in chunks[:10]:  # Limit to first 10 chunks per PDF
             num_examples = random.randint(2, 3)
             for _ in range(num_examples):
-                lang = random.choice(["pt", "en"])
+                lang = random.choice(self.languages)
                 example = self.generate_ask_example(chunk, lang)
                 if example:
                     examples.append(example)
@@ -362,7 +370,7 @@ Planus: Olá! Como posso ajudar você hoje?
         file_hash = hashlib.md5(pdf_file.name.encode()).hexdigest()[:8]
         return partial_dir / f"synthetic_{pdf_file.stem}_{file_hash}.jsonl"
 
-    def _load_checkpoint(self, checkpoint_file: Path) -> List[Dict[str, Any]] | None:
+    def _load_checkpoint(self, checkpoint_file: Path) -> Optional[List[Dict[str, Any]]]:
         """Load examples from a checkpoint file if it exists."""
         if not checkpoint_file.exists():
             return None
@@ -432,7 +440,7 @@ Planus: Olá! Como posso ajudar você hoje?
 
         action_examples = []
         for _ in range(num_action_examples):
-            lang = random.choice(["pt", "en"])
+            lang = random.choice(self.languages)
             example = self.generate_action_example(lang)
             if example:
                 action_examples.append(example)

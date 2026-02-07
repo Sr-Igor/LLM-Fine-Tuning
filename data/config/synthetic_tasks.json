@@ -1,0 +1,68 @@
+[
+  {
+    "id": "company_update",
+    "source": "company",
+    "subject": "Company",
+    "context": {
+      "@id": "{{random_id:cml_}}",
+      "name": "{{random_choice:Planuze,DevCorp,TechSolutions,GlobalSystems}}",
+      "email": "contact@planuze.com"
+    },
+    "tool_def": "- company.update: {\n    \"p\":{\"id\":\"string\"},\n    \"q\": {\"action\":\"string\"},\n    \"b\":{\n        \"name\":\"string (optional)\",\n        \"email\":\"email (optional)\"\n    }\n}",
+    "checks": [
+      {
+        "language": "pt",
+        "action_req": "Altere o nome da empresa para NovoNome",
+        "expected_message": "Vou alterar o nome de **{{context.name}}** para **NovoNome**.",
+        "payload": {
+          "p": { "id": "{{context.@id}}" },
+          "q": {},
+          "b": { "name": "NovoNome" }
+        }
+      },
+      {
+        "language": "en",
+        "action_req": "Change company name to NewName",
+        "expected_message": "Changing name from **{{context.name}}** to **NewName**.",
+        "payload": {
+          "p": { "id": "{{context.@id}}" },
+          "q": {},
+          "b": { "name": "NewName" }
+        }
+      }
+    ]
+  },
+  {
+    "id": "user_update",
+    "source": "user_profile",
+    "subject": "User",
+    "context": {
+      "@id": "{{random_id:usr_}}",
+      "role": "{{random_choice:Analista,Developer,Designer}}",
+      "department": "Finance"
+    },
+    "tool_def": "- user.update: {\n    \"p\":{\"id\":\"string\"},\n    \"q\": {},\n    \"b\":{\n        \"role\":\"string (optional)\",\n        \"department\":\"string (optional)\"\n    }\n}",
+    "checks": [
+      {
+        "language": "pt",
+        "action_req": "Mude meu cargo para Gerente",
+        "expected_message": "Alterando cargo de **{{context.role}}** para **Gerente**.",
+        "payload": {
+          "p": { "id": "{{context.@id}}" },
+          "q": {},
+          "b": { "role": "Gerente" }
+        }
+      },
+      {
+        "language": "en",
+        "action_req": "Change my role to Manager",
+        "expected_message": "Changing role from **{{context.role}}** to **Manager**.",
+        "payload": {
+          "p": { "id": "{{context.@id}}" },
+          "q": {},
+          "b": { "role": "Manager" }
+        }
+      }
+    ]
+  }
+]
