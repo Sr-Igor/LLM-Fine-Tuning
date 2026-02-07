@@ -88,10 +88,10 @@ echo -e "${BLUE}Configuração dos batches:${NC}\n"
 echo -e "  ${YELLOW}Batch 1${NC}: Chunks pequenos (2500), PT only, alta precisão"
 
 # Batch 2: Chunks médios, multilíngue, balanceado
-echo -e "  ${YELLOW}Batch 2${NC}: Chunks médios (3500), PT+EN+ES, balanceado"
+echo -e "  ${YELLOW}Batch 2${NC}: Chunks médios (3500), PT+EN+ES+FR+DE+IT, balanceado"
 
 # Batch 3: Chunks grandes, multilíngue, contexto amplo
-echo -e "  ${YELLOW}Batch 3${NC}: Chunks grandes (4500), PT+EN, contexto amplo"
+echo -e "  ${YELLOW}Batch 3${NC}: Chunks grandes (4500), PT+EN+ES+FR+DE+IT, contexto amplo"
 
 echo -e "\n${YELLOW}⚠️  Certifique-se de que o Ollama está rodando!${NC}"
 echo -e "${YELLOW}    Comando: ollama serve${NC}\n"
@@ -117,7 +117,7 @@ generate_batch \
     3500 \
     500 \
     "qwen2.5:14b" \
-    "pt,en,es" \
+    "pt,en,es,fr,de,it" \
     "data/raw/batches/batch_2_medium_multi.jsonl"
 
 # Batch 3: Chunks grandes, contexto amplo
@@ -126,7 +126,7 @@ generate_batch \
     4500 \
     700 \
     "qwen2.5:14b" \
-    "pt,en" \
+    "pt,en,es,fr,de,it" \
     "data/raw/batches/batch_3_large_context.jsonl"
 
 # ==========================================
