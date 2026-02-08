@@ -96,13 +96,36 @@ class CLI:
 
     def _run_train(self):
         """Execute the model training use case."""
-        self.presenter.show_panel(
-            "Training",
-            {
-                "Model": self.container.config.model.name,
-                "Backend": self.container.config.backend.type.upper(),
-            },
-        )
+        # Build comprehensive config info for logging
+        train_info = {
+            "Backend": self.container.config.backend.type.upper(),
+            "Model": self.container.config.model.name,
+            "Max Seq Len": str(self.container.config.model.max_seq_length),
+            "Train Data": self.container.config.data.train_path,
+            "Valid Data": self.container.config.data.val_path,
+        }
+
+        # Add Training params if available
+        if hasattr(self.container.config, "train"):
+            train_info.update(
+                {
+                    "Batch Size": str(self.container.config.train.batch_size),
+                    "Learning Rate": str(self.container.config.train.learning_rate),
+                    "Iterations": str(self.container.config.train.num_iters),
+                }
+            )
+
+        # Add LoRA params if available and relevant
+        if hasattr(self.container.config, "adapter") and self.container.config.adapter:
+            train_info.update(
+                {
+                    "LoRA Rank": str(self.container.config.adapter.r),
+                    "LoRA Alpha": str(self.container.config.adapter.alpha),
+                    "LoRA Dropout": str(self.container.config.adapter.dropout),
+                }
+            )
+
+        self.presenter.show_panel("Training Configuration", train_info)
         use_case = self.container.get_train_model_use_case()
 
         result = use_case.execute(self.container.config)
