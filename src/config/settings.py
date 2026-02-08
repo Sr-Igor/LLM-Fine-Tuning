@@ -171,6 +171,8 @@ class Settings:
 
         return DataConfig(
             data_dir=os.getenv("APPLE_DATA_DIR", "data"),
+            train_file=os.path.basename(os.getenv("APPLE_TRAIN_DATA", "train.jsonl")),
+            val_file=os.path.basename(os.getenv("APPLE_VALID_DATA", "valid.jsonl")),
             output_dir="outputs",  # Genérico
             adapter_path=os.getenv("APPLE_ADAPTER_PATH", "adapters"),
             fused_model_path=os.getenv("APPLE_FUSED_MODEL", "models/fused"),

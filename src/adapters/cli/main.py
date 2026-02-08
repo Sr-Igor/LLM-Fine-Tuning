@@ -101,27 +101,27 @@ class CLI:
             "Backend": self.container.config.backend.type.upper(),
             "Model": self.container.config.model.name,
             "Max Seq Len": str(self.container.config.model.max_seq_length),
-            "Train Data": self.container.config.data.train_path,
-            "Valid Data": self.container.config.data.val_path,
+            "Train Data": f"{self.container.config.data.data_dir}/{self.container.config.data.train_file}",
+            "Valid Data": f"{self.container.config.data.data_dir}/{self.container.config.data.val_file}",
         }
 
         # Add Training params if available
-        if hasattr(self.container.config, "train"):
+        if hasattr(self.container.config, "training"):
             train_info.update(
                 {
-                    "Batch Size": str(self.container.config.train.batch_size),
-                    "Learning Rate": str(self.container.config.train.learning_rate),
-                    "Iterations": str(self.container.config.train.num_iters),
+                    "Batch Size": str(self.container.config.training.batch_size),
+                    "Learning Rate": str(self.container.config.training.learning_rate),
+                    "Iterations": str(self.container.config.training.max_steps),
                 }
             )
 
         # Add LoRA params if available and relevant
-        if hasattr(self.container.config, "adapter") and self.container.config.adapter:
+        if hasattr(self.container.config, "lora") and self.container.config.lora:
             train_info.update(
                 {
-                    "LoRA Rank": str(self.container.config.adapter.r),
-                    "LoRA Alpha": str(self.container.config.adapter.alpha),
-                    "LoRA Dropout": str(self.container.config.adapter.dropout),
+                    "LoRA Rank": str(self.container.config.lora.r),
+                    "LoRA Alpha": str(self.container.config.lora.alpha),
+                    "LoRA Dropout": str(self.container.config.lora.dropout),
                 }
             )
 
